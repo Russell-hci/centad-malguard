@@ -1,0 +1,617 @@
+Phase 2 is where your project stops being a research proposal and starts becoming an actual research system.
+
+Based on your completed Phase 1 materials, the methodology has already been narrowed quite clearly:
+
+* malware image classification,
+* lightweight architectures,
+* FGSM + PGD adversarial attacks,
+* adversarial training,
+* Grad-CAM explainability,
+* robustness-efficiency tradeoff analysis.
+
+Your Phase 1 review also already identified the strongest candidate models:
+
+* MobileNetV3,
+* EfficientNet-B0/B1,
+* ShuffleNetV2,
+* MobileViT.
+
+So Phase 2 should NOT involve reading more papers.
+
+Phase 2 should focus on building:
+
+> the complete experimental pipeline.
+
+---
+
+# Phase 2 Goal
+
+By the end of Phase 2, you should have:
+
+✅ datasets downloaded
+
+✅ malware-to-image pipeline working
+
+✅ train/validation/test splits finalized
+
+✅ baseline model training working
+
+✅ evaluation framework working
+
+✅ reproducible project structure
+
+NOT:
+
+* adversarial attacks yet
+* robustness evaluation yet
+* Grad-CAM yet
+
+Those belong to later phases.
+
+---
+
+# Phase 2 Structure
+
+You should divide Phase 2 into 6 parts:
+
+| Section | Goal                          |
+| ------- | ----------------------------- |
+| 1       | Environment setup             |
+| 2       | Dataset acquisition           |
+| 3       | Malware image preprocessing   |
+| 4       | Dataset pipeline              |
+| 5       | Baseline model implementation |
+| 6       | Baseline evaluation           |
+
+---
+
+# SECTION 1 — Build Your Research Environment
+
+---
+
+# Create Final Project Structure
+
+```text
+project/
+│
+├── datasets/
+│   ├── raw/
+│   ├── processed/
+│   └── splits/
+│
+├── preprocessing/
+│
+├── models/
+│
+├── training/
+│
+├── evaluation/
+│
+├── attacks/
+│
+├── defenses/
+│
+├── explainability/
+│
+├── notebooks/
+│
+├── results/
+│
+└── reports/
+```
+
+---
+
+# Install Core Libraries
+
+You already identified PyTorch as the preferred framework because of:
+
+* research ecosystem,
+* attack libraries,
+* transfer learning support.
+
+Use:
+
+```bash
+pip install torch torchvision timm
+pip install pandas numpy matplotlib scikit-learn
+pip install opencv-python pillow
+```
+
+PyTorch transfer learning support is especially useful because you will be fine-tuning pretrained models rather than training from scratch. ([PyTorch Docs][1])
+
+---
+
+# SECTION 2 — Dataset Acquisition
+
+This is your MOST IMPORTANT Phase 2 task.
+
+The quality of your datasets affects everything else.
+
+---
+
+# Recommended Dataset Strategy
+
+Your literature review already compared the datasets and their tradeoffs.
+
+Use:
+
+## Dataset 1 — MalImg
+
+Purpose:
+
+* fast prototyping
+* baseline experiments
+
+Characteristics:
+
+* ~9,300 samples
+* 25 families
+* already image-based.
+
+### Resource
+
+[MalImg Dataset (Kaggle)](https://www.kaggle.com/datasets/ikrambenabd/malimg-original?utm_source=chatgpt.com)
+
+---
+
+## Dataset 2 — BIG2015
+
+Purpose:
+
+* stronger benchmark
+* more realistic malware diversity
+
+Characteristics:
+
+* ~10,000 samples
+* raw malware data
+* class imbalance.
+
+### Resource
+
+[Microsoft Malware Classification Challenge Dataset](https://www.kaggle.com/c/malware-classification/data?utm_source=chatgpt.com)
+
+---
+
+# Recommended Decision
+
+Start ONLY with MalImg.
+
+Do NOT begin with multiple datasets.
+
+Reason:
+
+* faster debugging,
+* faster experimentation,
+* lower complexity.
+
+Add BIG2015 later.
+
+---
+
+# Deliverable
+
+You should end this stage with:
+
+```text
+datasets/raw/malimg/
+```
+
+organized by malware family folders.
+
+---
+
+# SECTION 3 — Malware Image Pipeline
+
+This is where your methodology becomes real.
+
+Your literature review found that simple grayscale mapping often performs as well as more complex representations.
+
+Therefore:
+
+# Recommended Initial Approach
+
+Use:
+
+* existing malware images from MalImg
+
+DO NOT:
+
+* implement Hilbert curves yet
+* implement custom byte visualizations yet
+
+Keep Phase 2 simple.
+
+---
+
+# Image Standardization
+
+Convert all images to:
+
+```python
+224 × 224
+```
+
+Reason:
+
+* MobileNet
+* EfficientNet
+* ShuffleNet
+
+all support this naturally. ([PyTorch Docs][2])
+
+---
+
+# Data Normalization
+
+Use ImageNet normalization:
+
+```python
+mean=[0.485, 0.456, 0.406]
+std=[0.229, 0.224, 0.225]
+```
+
+because:
+
+* pretrained models expect it.
+
+---
+
+# Data Augmentation
+
+ONLY basic augmentation initially:
+
+```python
+RandomHorizontalFlip
+RandomRotation
+RandomResizedCrop
+```
+
+Do not overcomplicate.
+
+---
+
+# Deliverable
+
+Create:
+
+```text
+preprocessing/
+│
+├── transforms.py
+├── dataset_loader.py
+└── split_dataset.py
+```
+
+---
+
+# SECTION 4 — Dataset Splitting
+
+This is where many student projects become academically weak.
+
+Your literature review specifically warns about improper dataset evaluation.
+
+---
+
+# Recommended Split
+
+Use:
+
+| Set        | Percentage |
+| ---------- | ---------- |
+| Train      | 70%        |
+| Validation | 15%        |
+| Test       | 15%        |
+
+---
+
+# IMPORTANT
+
+Use:
+
+```python
+Stratified splitting
+```
+
+This preserves malware-family balance.
+
+---
+
+# Deliverable
+
+Generate:
+
+```text
+datasets/splits/
+
+train.csv
+val.csv
+test.csv
+```
+
+---
+
+# SECTION 5 — Build Baseline Models
+
+Now you finally begin training.
+
+---
+
+# Recommended Order
+
+---
+
+## Model 1 — MobileNetV3 Small
+
+Most important baseline.
+
+Why?
+
+Your literature review consistently identifies MobileNetV3 as:
+
+* highly efficient,
+* lightweight,
+* deployment-friendly.
+
+---
+
+## Model 2 — EfficientNet-B0
+
+Second baseline.
+
+Purpose:
+
+* stronger accuracy,
+* compare robustness later.
+
+---
+
+## Model 3 — ShuffleNetV2
+
+Optional third model.
+
+Good efficiency benchmark.
+
+---
+
+# Use Transfer Learning
+
+Do NOT train from scratch.
+
+Use pretrained ImageNet weights.
+
+PyTorch already provides pretrained versions. ([PyTorch Docs][2])
+
+---
+
+# Recommended Training Strategy
+
+### Stage 1
+
+Freeze backbone:
+
+```python
+for param in model.features.parameters():
+    param.requires_grad = False
+```
+
+Train classifier head only.
+
+---
+
+### Stage 2
+
+Unfreeze final layers.
+
+Fine-tune.
+
+This improves stability.
+
+---
+
+# Deliverable
+
+Create:
+
+```text
+models/
+│
+├── mobilenet.py
+├── efficientnet.py
+├── shufflenet.py
+```
+
+---
+
+# SECTION 6 — Build Evaluation Framework
+
+Do this BEFORE large-scale training.
+
+---
+
+# Metrics To Track
+
+Your proposal already defined:
+
+* classification accuracy,
+* latency,
+* model size,
+* parameter count,
+* memory usage.
+
+---
+
+# Required Metrics
+
+## Accuracy
+
+## Precision
+
+## Recall
+
+## F1 Score
+
+## Confusion Matrix
+
+---
+
+# Efficiency Metrics
+
+## Parameters
+
+```python
+sum(p.numel() for p in model.parameters())
+```
+
+---
+
+## Inference Latency
+
+Measure:
+
+```python
+time per image
+```
+
+---
+
+## Model Size
+
+Save:
+
+```python
+.pth
+```
+
+and record file size.
+
+---
+
+# Deliverable
+
+Create:
+
+```text
+evaluation/
+│
+├── metrics.py
+├── confusion_matrix.py
+├── latency.py
+└── benchmark.py
+```
+
+---
+
+# Recommended Phase 2 Timeline
+
+| Day  | Goal                   |
+| ---- | ---------------------- |
+| 1    | Environment + folders  |
+| 2    | Download MalImg        |
+| 3    | Dataset pipeline       |
+| 4    | Splitting + loaders    |
+| 5    | MobileNetV3 baseline   |
+| 6    | EfficientNet baseline  |
+| 7    | Evaluation framework   |
+| 8–10 | Baseline training runs |
+
+---
+
+# Resources You Should Actually Use
+
+## PyTorch
+
+Official framework:
+
+[PyTorch Official Site](https://pytorch.org/?utm_source=chatgpt.com)
+
+---
+
+## Transfer Learning Tutorial
+
+This should be your main implementation guide:
+
+[PyTorch Transfer Learning Tutorial](https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html?utm_source=chatgpt.com)
+
+---
+
+## Torchvision Models
+
+For MobileNet, EfficientNet, ShuffleNet:
+
+[Torchvision Model Zoo](https://docs.pytorch.org/vision/main/models.html?utm_source=chatgpt.com)
+
+---
+
+## Torchattacks
+
+You won't use it heavily yet, but install now because Phase 3 depends on it.
+
+[Torchattacks Documentation](https://adversarial-attacks-pytorch.readthedocs.io/?utm_source=chatgpt.com)
+
+[Torchattacks GitHub Repository](https://github.com/Harry24k/adversarial-attacks-pytorch?utm_source=chatgpt.com)
+
+---
+
+# Phase 2 Final Deliverables
+
+By the end of Phase 2 you should have:
+
+## Dataset Pipeline
+
+* downloaded dataset
+* preprocessing
+* splitting
+* dataloaders
+
+---
+
+## Baseline Models
+
+* MobileNetV3
+* EfficientNet-B0
+* (optional) ShuffleNetV2
+
+trained on clean data.
+
+---
+
+## Evaluation Framework
+
+* accuracy
+* F1
+* confusion matrix
+* latency
+* parameter count
+
+---
+
+## Saved Outputs
+
+```text
+results/
+
+mobilenet_baseline.csv
+efficientnet_baseline.csv
+
+mobilenet_best.pth
+efficientnet_best.pth
+```
+
+---
+
+The most important outcome of Phase 2 is not achieving high accuracy.
+
+The most important outcome is producing a **stable, reproducible baseline pipeline** that can later support:
+
+* FGSM attacks,
+* PGD attacks,
+* adversarial training,
+* robustness benchmarking,
+* and Grad-CAM analysis.
+
+That baseline becomes the foundation for every later experiment in your proposal.
+
+[1]: https://docs.pytorch.org/tutorials/beginner/transfer_learning_tutorial.html?utm_source=chatgpt.com "Transfer Learning for Computer Vision Tutorial"
+[2]: https://docs.pytorch.org/vision/main/models.html?utm_source=chatgpt.com "Models and pre-trained weights — Torchvision main ..."

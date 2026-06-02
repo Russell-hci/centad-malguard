@@ -1,0 +1,649 @@
+Great — you’re now at the stage where Phase 1 becomes a proper research bootstrapping phase rather than “just reading papers.”
+
+Your Phase 1 goal is to build enough understanding to justify every design choice in your project:
+
+* why lightweight models,
+* why malware images,
+* why adversarial attacks,
+* why specific datasets,
+* and why your evaluation methodology is academically defensible.
+
+Your project direction is already strong because it combines:
+
+* cybersecurity,
+* lightweight AI,
+* adversarial robustness,
+* deployment constraints,
+* and explainability.
+
+The previous CenTaD malware URL project is also an excellent template for:
+
+* methodology explanation,
+* preprocessing detail,
+* evaluation metrics,
+* and deployment framing.
+
+---
+
+# Your Phase 1 Roadmap
+
+You should split Phase 1 into 6 concrete sections:
+
+| Section | Goal                             |
+| ------- | -------------------------------- |
+| 1       | Malware image classification     |
+| 2       | Lightweight models               |
+| 3       | Adversarial ML                   |
+| 4       | Robustness defenses              |
+| 5       | Explainability (XAI)             |
+| 6       | Literature matrix + research gap |
+
+---
+
+# STEP 0 — Set Up Your Workspace (Do This First)
+
+## Create Your Project Folder
+
+```bash
+mkdir malware-robustness-project
+cd malware-robustness-project
+```
+
+---
+
+## Create Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+Activate:
+
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+### Mac/Linux
+
+```bash
+source venv/bin/activate
+```
+
+---
+
+## Install Core Libraries
+
+Use PyTorch — it has the best adversarial ecosystem. ([PyTorch][1])
+
+```bash
+pip install torch torchvision timm
+pip install torchattacks
+pip install grad-cam
+pip install pandas matplotlib scikit-learn jupyter
+```
+
+`torchattacks` is especially important because it already implements:
+
+* FGSM,
+* PGD,
+* BIM,
+* CW,
+* and many others. ([adversarial-attacks-pytorch.readthedocs.io][2])
+
+---
+
+# STEP 1 — Understand Malware Image Classification
+
+This is your foundation.
+
+Your entire project depends on understanding:
+
+* how malware binaries become images,
+* why CNNs work on them,
+* and what datasets are commonly used.
+
+Your literature review already summarizes this well.
+
+---
+
+# What You Need To Learn
+
+## A. Malware Binary Structure
+
+Learn:
+
+* PE files,
+* executable sections,
+* byte-level structure.
+
+You do NOT need reverse-engineering expertise.
+
+You just need conceptual understanding.
+
+---
+
+## B. Malware-to-Image Conversion
+
+This is one of the MOST important concepts.
+
+Typical methods:
+
+* grayscale mapping,
+* RGB byte mapping,
+* Hilbert curve visualization.
+
+The previous CenTaD project used:
+
+* binary visualization,
+* Hilbert curves,
+* BinVis,
+* MobileNetV2.
+
+That is directly relevant to your project.
+
+---
+
+# Key Resources
+
+## Foundational Malware Dataset
+
+### MalImg Dataset
+
+[MalImg Dataset (Kaggle)](https://www.kaggle.com/datasets/ikrambenabd/malimg-original?utm_source=chatgpt.com)
+Contains:
+
+* 9,339 malware samples,
+* 25 malware families. ([Kaggle][3])
+
+---
+
+## Malware Image GitHub Example
+
+[MalImg GitHub Example Repository](https://github.com/Hydrogenion/Malimg?utm_source=chatgpt.com) ([GitHub][4])
+
+This helps you understand:
+
+* image conversion,
+* folder structures,
+* dataset organization.
+
+---
+
+## Malware Visualization Research Repo
+
+[Malware Visualization Experiments Repository](https://github.com/bazinho/MalImg?utm_source=chatgpt.com) ([GitHub][5])
+
+---
+
+# Your Task (Day 1–2)
+
+Read:
+
+1. Your literature review Section 1–2
+2. The earlier CenTaD report methodology section
+3. Browse the MalImg repositories.
+
+---
+
+# Deliverable
+
+Create a document:
+
+```text
+phase1/malware_image_notes.md
+```
+
+Include:
+
+* what malware image classification is,
+* common datasets,
+* conversion methods,
+* why CNNs work,
+* current limitations.
+
+---
+
+# STEP 2 — Learn Lightweight Models
+
+This section is CRITICAL.
+
+Your project is NOT just malware classification.
+
+It is:
+
+> lightweight robust malware classification.
+
+---
+
+# Priority Models
+
+## 1. MobileNetV3 (MOST IMPORTANT)
+
+You should deeply understand:
+
+* why it’s lightweight,
+* depthwise separable convolutions,
+* mobile deployment rationale.
+
+The original MobileNet paper:
+[MobileNets Paper](https://arxiv.org/abs/1704.04861?utm_source=chatgpt.com) ([arXiv][6])
+
+MobileNetV3 paper:
+[Searching for MobileNetV3](https://arxiv.org/abs/1905.02244?utm_source=chatgpt.com) ([arXiv][7])
+
+---
+
+## 2. EfficientNet
+
+Understand:
+
+* compound scaling,
+* efficiency gains.
+
+---
+
+## 3. ShuffleNet
+
+Understand:
+
+* channel shuffling,
+* low-memory inference.
+
+---
+
+## 4. MobileViT / TinyViT (Optional but Strong)
+
+These help your project sound more modern and research-oriented.
+
+---
+
+# Your Literature Review Already Summarizes These
+
+Read carefully:
+
+
+That section already explains:
+
+* MobileNet,
+* EfficientNet,
+* ShuffleNet,
+* SqueezeNet,
+* compact transformers.
+
+---
+
+# Your Task (Day 3)
+
+Create a comparison table:
+
+| Model           | Params | FLOPs | Strengths | Weaknesses |
+| --------------- | ------ | ----- | --------- | ---------- |
+| MobileNetV3     |        |       |           |            |
+| EfficientNet-B0 |        |       |           |            |
+| ShuffleNetV2    |        |       |           |            |
+| MobileViT       |        |       |           |            |
+
+This becomes directly usable later in your report.
+
+---
+
+# STEP 3 — Learn Adversarial Machine Learning
+
+This is your MOST IMPORTANT topic.
+
+Your project’s novelty comes from:
+
+> robustness-efficiency tradeoff analysis.
+
+---
+
+# Learn These Concepts
+
+You MUST understand:
+
+* perturbations,
+* white-box attacks,
+* black-box attacks,
+* transferability,
+* robust accuracy.
+
+---
+
+# PRIORITY ATTACKS
+
+## 1. FGSM (Start Here)
+
+FGSM is the easiest attack to understand.
+
+Formula:
+
+x_{adv}=x+\epsilon\cdot sign(\nabla_x J(\theta,x,y))
+
+Conceptually:
+
+* compute gradient,
+* slightly perturb image,
+* fool model.
+
+---
+
+# Best FGSM Resource
+
+[Official PyTorch FGSM Tutorial](https://docs.pytorch.org/tutorials/beginner/fgsm_tutorial.html?utm_source=chatgpt.com) ([docs.pytorch.org][8])
+
+This should be your FIRST adversarial ML tutorial.
+
+---
+
+## 2. PGD (Most Important Strong Attack)
+
+Think of PGD as:
+
+> iterative FGSM.
+
+This is the attack most papers benchmark against.
+
+---
+
+## 3. BIM
+
+Optional initially.
+
+---
+
+## 4. Carlini-Wagner (Advanced)
+
+Leave this for later.
+
+---
+
+# Attack Libraries You Will Use
+
+## torchattacks
+
+[torchattacks Documentation](https://adversarial-attacks-pytorch.readthedocs.io/?utm_source=chatgpt.com) ([adversarial-attacks-pytorch.readthedocs.io][2])
+
+This will save you MASSIVE amounts of implementation time.
+
+---
+
+# Your Literature Review Already Covers This
+
+Read carefully:
+
+
+This section explains:
+
+* FGSM,
+* PGD,
+* BIM,
+* CW attacks,
+* malware adversarial attacks.
+
+---
+
+# Your Task (Day 4–5)
+
+Create:
+
+```text
+phase1/adversarial_ml_notes.md
+```
+
+You should be able to explain:
+
+* what FGSM is,
+* what PGD is,
+* why adversarial examples work,
+* what robust accuracy means.
+
+---
+
+# STEP 4 — Learn Defenses
+
+You need at least ONE practical defense.
+
+---
+
+# PRIORITY DEFENSES
+
+## 1. Adversarial Training (MOST IMPORTANT)
+
+This will likely become your primary defense method.
+
+Concept:
+
+* train model on adversarial examples.
+
+Tradeoff:
+
+* better robustness,
+* more compute cost.
+
+---
+
+# Your Literature Review Covers This
+
+Read:
+
+
+---
+
+# Additional Resource
+
+[FGSM + Adversarial Training Example (Kaggle)](https://www.kaggle.com/code/seasonxc/fgsm-pgd-and-adversarial-training-cifar-10?utm_source=chatgpt.com)
+
+---
+
+# Deliverable
+
+Create:
+
+| Defense              | Strengths | Weaknesses | Compute Cost |
+| -------------------- | --------- | ---------- | ------------ |
+| Adversarial Training |           |            |              |
+| Data Augmentation    |           |            |              |
+| Feature Denoising    |           |            |              |
+
+---
+
+# STEP 5 — Learn Explainability (XAI)
+
+This is what makes your project sound mature academically.
+
+---
+
+# PRIORITY METHOD
+
+## Grad-CAM
+
+Use it to visualize:
+
+* what regions the model focuses on,
+* how attacks change attention.
+
+---
+
+# Your Literature Review Covers This
+
+Read:
+
+
+---
+
+# Useful Resource
+
+[pytorch-grad-cam Library](https://github.com/jacobgil/pytorch-grad-cam?utm_source=chatgpt.com)
+
+---
+
+# Deliverable
+
+Write:
+
+```text
+phase1/xai_notes.md
+```
+
+Include:
+
+* why XAI matters,
+* why Grad-CAM is suitable,
+* how attacks affect explanations.
+
+---
+
+# STEP 6 — Build Your Literature Matrix
+
+This is EXTREMELY important.
+
+Most students skip this.
+
+Don’t.
+
+---
+
+# Create a Spreadsheet
+
+Columns:
+
+| Paper | Dataset | Model | Attack | Defense | Accuracy | Robust Accuracy | Weakness |
+| ----- | ------- | ----- | ------ | ------- | -------- | --------------- | -------- |
+
+Aim for:
+
+* 15–25 papers.
+
+---
+
+# Categories To Include
+
+You need papers from:
+
+* malware classification,
+* lightweight CNNs,
+* adversarial ML,
+* malware adversarial attacks,
+* explainability.
+
+---
+
+# Your Goal Is NOT Summarization
+
+Your goal is:
+
+> identify patterns and gaps.
+
+Example observations:
+
+* most papers report only accuracy,
+* few test robustness,
+* few use lightweight models,
+* almost none analyze XAI under attack.
+
+That becomes YOUR research gap.
+
+---
+
+# Suggested Finalized Phase 1 Choices
+
+By end of Phase 1, you should probably finalize:
+
+## Datasets
+
+* MalImg
+* BIG2015
+* CIC-MalMem
+
+## Baseline Models
+
+* MobileNetV3
+* EfficientNet-B0
+* ShuffleNetV2
+
+## Attacks
+
+* FGSM
+* PGD
+
+## Defenses
+
+* Adversarial training
+
+## Explainability
+
+* Grad-CAM
+
+This is already a very strong and manageable project scope.
+
+---
+
+# Your Immediate Next Actions (Today)
+
+## 1. Install Environment
+
+Use the pip commands above.
+
+---
+
+## 2. Read These Sections
+
+* Malware classification sections
+* Lightweight model sections
+
+---
+
+## 3. Open These Resources
+
+* [PyTorch FGSM Tutorial](https://docs.pytorch.org/tutorials/beginner/fgsm_tutorial.html?utm_source=chatgpt.com)
+* [torchattacks Docs](https://adversarial-attacks-pytorch.readthedocs.io/?utm_source=chatgpt.com)
+* [MalImg Dataset](https://www.kaggle.com/datasets/ikrambenabd/malimg-original?utm_source=chatgpt.com)
+
+---
+
+## 4. Create Literature Matrix
+
+Start immediately.
+
+Even an incomplete spreadsheet is fine.
+
+---
+
+## 5. Create Notes Folder
+
+```text
+phase1/
+├── malware_image_notes.md
+├── lightweight_models.md
+├── adversarial_ml_notes.md
+├── defenses.md
+├── xai_notes.md
+└── literature_matrix.xlsx
+```
+
+---
+
+The biggest mistake now would be rushing into model training before understanding:
+
+* why the methodology makes sense,
+* what the research gap is,
+* and how you’ll justify your experimental design.
+
+The earlier CenTaD report succeeded because the methodology and preprocessing were clearly justified.
+
+Your project should aim for the same level of rigor — but extended into:
+
+* adversarial robustness,
+* lightweight deployment,
+* and explainability.
+
+[1]: https://pytorch.org/?utm_source=chatgpt.com "PyTorch"
+[2]: https://adversarial-attacks-pytorch.readthedocs.io/?utm_source=chatgpt.com "torchattacks — torchattacks v3.5.1 documentation"
+[3]: https://www.kaggle.com/datasets/ikrambenabd/malimg-original?utm_source=chatgpt.com "Malimg (Original)"
+[4]: https://github.com/Hydrogenion/Malimg?utm_source=chatgpt.com "Hydrogenion/Malimg"
+[5]: https://github.com/bazinho/MalImg?utm_source=chatgpt.com "bazinho/MalImg: Visual malware classification experiments ..."
+[6]: https://arxiv.org/abs/1704.04861?utm_source=chatgpt.com "MobileNets: Efficient Convolutional Neural Networks for ..."
+[7]: https://arxiv.org/abs/1905.02244?utm_source=chatgpt.com "Searching for MobileNetV3"
+[8]: https://docs.pytorch.org/tutorials/beginner/fgsm_tutorial.html?utm_source=chatgpt.com "Adversarial Example Generation"

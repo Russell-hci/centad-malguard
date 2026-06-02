@@ -1,0 +1,30 @@
+model: mobilenet_v3_small
+train_csv: datasets/splits_duplicate_aware/train.csv
+val_csv: datasets/splits_duplicate_aware/val.csv
+test_csv: datasets/splits_duplicate_aware/test.csv
+batch_size: 32
+num_workers: 8
+image_size: 224
+epochs_head: 5
+epochs_finetune: 5
+finetune_trainable_layers: all
+learning_rate_head: 0.001
+learning_rate_finetune: 0.0001
+optimizer: adam
+scheduler:
+  name: cosine
+  head_t_max: 5
+  finetune_t_max: 5
+  eta_min: 0.0
+early_stopping:
+  patience: 3
+  min_delta: 0.0
+weighted_loss: false
+seed: 42
+deterministic: true
+cudnn_benchmark: false
+device: auto
+output_dir: results/baseline_duplicate_aware
+pretrained: true
+dataset_manifest_path: manifests/dataset_manifest.json
+split_manifest_path: manifests/split_manifest_duplicate_aware.json

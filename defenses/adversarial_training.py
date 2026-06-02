@@ -1,6 +1,6 @@
 import argparse
 import sys
-from collections import Counter
+import time
 from pathlib import Path
 from typing import Any
 
@@ -12,206 +12,151 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from attacks.fgsm import NormalizedModel, denormalize_images, normalize_images
+from attacks.pgd import build_pgd_attack
 from evaluation.benchmark import benchmark_model, save_benchmark_results
-from models.efficientnet import EFFICIENTNET_B0_ADAPTER
 from models.mobilenet import MOBILENET_V3_SMALL_ADAPTER
 from preprocessing.dataset_loader import create_dataloaders
+from training.train import (
+    EarlyStopping,
+    apply_finetune_policy,
+    build_optimizer,
+    build_scheduler,
+    compute_class_weights,
+    count_correct,
+    get_current_lr,
+    run_eval_epoch,
+    save_checkpoint,
+)
 from utils.config import load_yaml_config
-from utils.experiment import TeeLogger, get_environment_metadata, utc_timestamp, write_json
+from utils.experiment import (
+    TeeLogger,
+    get_environment_metadata,
+    sha256_file,
+    utc_timestamp,
+    write_json,
+)
 from utils.reproducibility import set_global_seed
 
 
-MODEL_ADAPTERS = {
-    MOBILENET_V3_SMALL_ADAPTER.name: MOBILENET_V3_SMALL_ADAPTER,
-    EFFICIENTNET_B0_ADAPTER.name: EFFICIENTNET_B0_ADAPTER,
-}
-
-DEFAULT_CONFIGS = {
-    MOBILENET_V3_SMALL_ADAPTER.name: Path("configs/mobilenet.yaml"),
-    EFFICIENTNET_B0_ADAPTER.name: Path("configs/efficientnet.yaml"),
-}
-
-
-class EarlyStopping:
-    def __init__(self, patience: int, min_delta: float = 0.0) -> None:
-        self.patience = patience
-        self.min_delta = min_delta
-        self.best_value = float("inf")
-        self.bad_epochs = 0
-
-    def should_stop(self, value: float) -> bool:
-        if value < self.best_value - self.min_delta:
-            self.best_value = value
-            self.bad_epochs = 0
-            return False
-
-        self.bad_epochs += 1
-        return self.bad_epochs >= self.patience
+MODEL_ADAPTER = MOBILENET_V3_SMALL_ADAPTER
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Train a reproducible MalImg baseline model.",
+        description="Run PGD adversarial training for MobileNetV3 on MalImg.",
     )
     parser.add_argument(
         "--config",
         type=Path,
-        default=None,
-        help="Path to a model YAML config. Defaults to the config for --model.",
-    )
-    parser.add_argument(
-        "--model",
-        choices=sorted(MODEL_ADAPTERS),
-        default=MOBILENET_V3_SMALL_ADAPTER.name,
-        help="Model config to use when --config is not supplied.",
-    )
-    parser.add_argument(
-        "--no-pretrained",
-        action="store_true",
-        help="Override config and initialize without torchvision pretrained weights.",
+        default=Path("configs/adversarial_training_mobilenet.yaml"),
+        help="Path to the adversarial-training YAML config.",
     )
     return parser.parse_args()
-
-
-def resolve_config_path(args: argparse.Namespace) -> Path:
-    if args.config is not None:
-        return args.config
-    return DEFAULT_CONFIGS[args.model]
 
 
 def resolve_device(device_config: str) -> torch.device:
     if device_config != "auto":
         return torch.device(device_config)
-
     if torch.cuda.is_available():
         return torch.device("cuda")
-
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         return torch.device("mps")
-
     return torch.device("cpu")
 
 
 def create_experiment_dir(output_dir: str | Path, model_name: str) -> tuple[Path, str]:
     timestamp = utc_timestamp()
     base_dir = Path(output_dir)
-
     for suffix in ["", *[f"_{index}" for index in range(1, 100)]]:
-        experiment_dir = base_dir / f"{model_name}_{timestamp}{suffix}"
+        experiment_dir = base_dir / f"{model_name}_pgd_adversarial_training_{timestamp}{suffix}"
         try:
             experiment_dir.mkdir(parents=True, exist_ok=False)
             return experiment_dir, timestamp
         except FileExistsError:
             continue
-
     raise FileExistsError(f"Could not create a unique experiment directory in {base_dir}")
 
 
-def build_optimizer(parameters, config: dict[str, Any], learning_rate: float):
-    optimizer_name = str(config.get("optimizer", "adam")).lower()
-    weight_decay = float(config.get("weight_decay", 0.0))
+def load_initial_weights(model: nn.Module, config: dict[str, Any]) -> dict[str, Any] | None:
+    checkpoint_path = config.get("initial_checkpoint_path")
+    if not checkpoint_path:
+        return None
 
-    if optimizer_name == "adam":
-        return torch.optim.Adam(parameters, lr=learning_rate, weight_decay=weight_decay)
-
-    if optimizer_name == "adamw":
-        return torch.optim.AdamW(parameters, lr=learning_rate, weight_decay=weight_decay)
-
-    if optimizer_name == "sgd":
-        momentum = float(config.get("momentum", 0.9))
-        return torch.optim.SGD(
-            parameters,
-            lr=learning_rate,
-            momentum=momentum,
-            weight_decay=weight_decay,
-        )
-
-    raise ValueError(f"Unsupported optimizer: {optimizer_name}")
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    return {
+        "checkpoint_path": str(checkpoint_path),
+        "checkpoint_sha256": sha256_file(checkpoint_path),
+        "checkpoint_best_metrics": checkpoint.get("best_metrics"),
+        "checkpoint_config": checkpoint.get("config"),
+    }
 
 
-def build_scheduler(optimizer, config: dict[str, Any], stage_name: str, epochs: int):
-    scheduler_config = config.get("scheduler") or {}
-    scheduler_name = str(scheduler_config.get("name", "none")).lower()
-
-    if scheduler_name in {"none", "null"}:
-        return None, "none"
-
-    if scheduler_name == "cosine":
-        t_max_key = "head_t_max" if stage_name == "head" else "finetune_t_max"
-        t_max = int(scheduler_config.get(t_max_key, max(epochs, 1)))
-        eta_min = float(scheduler_config.get("eta_min", 0.0))
-        return torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer,
-            T_max=max(t_max, 1),
-            eta_min=eta_min,
-        ), "epoch"
-
-    if scheduler_name == "reduce_on_plateau":
-        patience = int(scheduler_config.get("patience", 2))
-        factor = float(scheduler_config.get("factor", 0.1))
-        return torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer,
-            mode="min",
-            patience=patience,
-            factor=factor,
-        ), "plateau"
-
-    raise ValueError(f"Unsupported scheduler: {scheduler_name}")
+def build_attack(model: nn.Module, config: dict[str, Any]):
+    pgd_config = config["adversarial_training"]["pgd"]
+    device = next(model.parameters()).device
+    return build_pgd_attack(
+        model=NormalizedModel(model).to(device),
+        epsilon=float(pgd_config["epsilon"]),
+        alpha=float(pgd_config["alpha"]),
+        steps=int(pgd_config["steps"]),
+        random_start=bool(pgd_config.get("random_start", True)),
+    )
 
 
-def get_current_lr(optimizer) -> float:
-    return float(optimizer.param_groups[0]["lr"])
+def make_mixed_batch(
+    model: nn.Module,
+    normalized_images: torch.Tensor,
+    labels: torch.Tensor,
+    adversarial_fraction: float,
+    attack,
+) -> tuple[torch.Tensor, int]:
+    batch_size = labels.size(0)
+    adversarial_count = max(1, int(round(batch_size * adversarial_fraction)))
+    adversarial_count = min(adversarial_count, batch_size)
 
+    indices = torch.randperm(batch_size, device=labels.device)
+    adversarial_indices = indices[:adversarial_count]
 
-def compute_class_weights(train_dataset, class_names: list[str], device: torch.device) -> torch.Tensor:
-    label_counts = Counter(train_dataset.dataframe["label"])
-    total = sum(label_counts.values())
-    weights = [
-        total / (len(class_names) * max(label_counts[class_name], 1))
-        for class_name in class_names
-    ]
-    return torch.tensor(weights, dtype=torch.float32, device=device)
-
-
-def apply_finetune_policy(model: nn.Module, adapter, config: dict[str, Any]) -> None:
-    adapter.set_backbone_trainable(model, is_trainable=True)
-    trainable_layers = config.get("finetune_trainable_layers", "all")
-
-    if trainable_layers in {"all", None}:
-        return
-
-    if not isinstance(trainable_layers, int) or trainable_layers <= 0:
-        raise ValueError("finetune_trainable_layers must be a positive integer or 'all'.")
-
-    if not hasattr(model, "features"):
-        raise ValueError("Layer-limited fine-tuning requires the model to expose .features.")
-
-    for parameter in model.features.parameters():
-        parameter.requires_grad = False
-
-    feature_blocks = list(model.features.children())
-    for block in feature_blocks[-trainable_layers:]:
-        for parameter in block.parameters():
-            parameter.requires_grad = True
-
-
-def count_correct(logits: torch.Tensor, labels: torch.Tensor) -> int:
-    predictions = torch.argmax(logits, dim=1)
-    return int((predictions == labels).sum().item())
-
-
-def run_train_epoch(model, dataloader, criterion, optimizer, device: torch.device) -> dict[str, float]:
+    raw_images = denormalize_images(normalized_images)
+    adversarial_raw = attack(raw_images[adversarial_indices], labels[adversarial_indices])
     model.train()
+
+    mixed_images = normalized_images.clone()
+    mixed_images[adversarial_indices] = normalize_images(adversarial_raw.detach())
+    return mixed_images, adversarial_count
+
+
+def run_adversarial_train_epoch(
+    model: nn.Module,
+    dataloader,
+    criterion,
+    optimizer,
+    device: torch.device,
+    config: dict[str, Any],
+) -> dict[str, float]:
+    model.train()
+    attack = build_attack(model, config)
+    adversarial_fraction = float(config["adversarial_training"].get("adversarial_fraction", 0.5))
     running_loss = 0.0
     correct = 0
     total = 0
+    adversarial_total = 0
 
     for images, labels in dataloader:
         images = images.to(device)
         labels = labels.to(device)
+        mixed_images, adversarial_count = make_mixed_batch(
+            model=model,
+            normalized_images=images,
+            labels=labels,
+            adversarial_fraction=adversarial_fraction,
+            attack=attack,
+        )
 
         optimizer.zero_grad(set_to_none=True)
-        logits = model(images)
+        logits = model(mixed_images)
         loss = criterion(logits, labels)
         loss.backward()
         optimizer.step()
@@ -220,59 +165,17 @@ def run_train_epoch(model, dataloader, criterion, optimizer, device: torch.devic
         running_loss += float(loss.item()) * batch_size
         correct += count_correct(logits, labels)
         total += batch_size
+        adversarial_total += adversarial_count
 
     return {
         "loss": running_loss / max(total, 1),
         "accuracy": correct / max(total, 1),
+        "adversarial_fraction_actual": adversarial_total / max(total, 1),
     }
 
 
-def run_eval_epoch(model, dataloader, criterion, device: torch.device) -> dict[str, float]:
-    model.eval()
-    running_loss = 0.0
-    correct = 0
-    total = 0
-
-    with torch.inference_mode():
-        for images, labels in dataloader:
-            images = images.to(device)
-            labels = labels.to(device)
-
-            logits = model(images)
-            loss = criterion(logits, labels)
-
-            batch_size = labels.size(0)
-            running_loss += float(loss.item()) * batch_size
-            correct += count_correct(logits, labels)
-            total += batch_size
-
-    return {
-        "loss": running_loss / max(total, 1),
-        "accuracy": correct / max(total, 1),
-    }
-
-
-def save_checkpoint(
-    model,
-    output_path: Path,
-    class_names: list[str],
-    config: dict[str, Any],
-    best_metrics: dict[str, float],
-) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(
-        {
-            "model_state_dict": model.state_dict(),
-            "class_names": class_names,
-            "config": config,
-            "best_metrics": best_metrics,
-        },
-        output_path,
-    )
-
-
-def run_training_stage(
-    model,
+def run_stage(
+    model: nn.Module,
     dataloaders,
     criterion,
     config: dict[str, Any],
@@ -301,13 +204,15 @@ def run_training_stage(
     )
 
     for epoch in range(1, epochs + 1):
-        learning_rate = get_current_lr(optimizer)
-        train_metrics = run_train_epoch(
+        started_at = time.perf_counter()
+        current_lr = get_current_lr(optimizer)
+        train_metrics = run_adversarial_train_epoch(
             model=model,
             dataloader=dataloaders["train"],
             criterion=criterion,
             optimizer=optimizer,
             device=device,
+            config=config,
         )
         val_metrics = run_eval_epoch(
             model=model,
@@ -315,28 +220,33 @@ def run_training_stage(
             criterion=criterion,
             device=device,
         )
+        elapsed_seconds = time.perf_counter() - started_at
 
         row = {
             "stage": stage_name,
             "epoch": epoch,
             "train_loss": train_metrics["loss"],
             "train_accuracy": train_metrics["accuracy"],
-            "val_loss": val_metrics["loss"],
-            "val_accuracy": val_metrics["accuracy"],
-            "learning_rate": learning_rate,
+            "train_adversarial_fraction": train_metrics["adversarial_fraction_actual"],
+            "val_loss_clean": val_metrics["loss"],
+            "val_accuracy_clean": val_metrics["accuracy"],
+            "learning_rate": current_lr,
+            "epoch_elapsed_seconds": elapsed_seconds,
         }
         history.append(row)
         print(
             f"{stage_name} epoch {epoch}/{epochs} "
             f"train_loss={train_metrics['loss']:.4f} "
             f"train_acc={train_metrics['accuracy']:.4f} "
-            f"val_loss={val_metrics['loss']:.4f} "
-            f"val_acc={val_metrics['accuracy']:.4f}"
+            f"adv_frac={train_metrics['adversarial_fraction_actual']:.3f} "
+            f"val_loss_clean={val_metrics['loss']:.4f} "
+            f"val_acc_clean={val_metrics['accuracy']:.4f} "
+            f"elapsed={elapsed_seconds:.1f}s"
         )
 
-        if val_metrics["loss"] < best_state["val_loss"]:
-            best_state["val_loss"] = val_metrics["loss"]
-            best_state["val_accuracy"] = val_metrics["accuracy"]
+        if val_metrics["loss"] < best_state["val_loss_clean"]:
+            best_state["val_loss_clean"] = val_metrics["loss"]
+            best_state["val_accuracy_clean"] = val_metrics["accuracy"]
             best_state["stage"] = stage_name
             best_state["epoch"] = epoch
             save_checkpoint(
@@ -344,12 +254,7 @@ def run_training_stage(
                 output_path=checkpoint_path,
                 class_names=class_names,
                 config=config,
-                best_metrics={
-                    "val_loss": best_state["val_loss"],
-                    "val_accuracy": best_state["val_accuracy"],
-                    "stage": stage_name,
-                    "epoch": epoch,
-                },
+                best_metrics=best_state,
             )
 
         if scheduler is not None and scheduler_step_mode == "plateau":
@@ -372,37 +277,41 @@ def build_metadata(
     checkpoint_path: Path,
     metrics_path: Path,
     run_log_path: Path,
+    initial_checkpoint_metadata: dict[str, Any] | None,
 ) -> dict[str, Any]:
     environment = get_environment_metadata(repo_root=PROJECT_ROOT)
-    cuda_metadata = environment["cuda"]
+    adversarial_fraction = float(config["adversarial_training"].get("adversarial_fraction", 0.5))
     return {
+        "manifest_type": "pgd_adversarial_training_experiment",
         "timestamp_utc": timestamp,
-        "git_commit_hash": environment["git_commit_hash"],
-        "git_dirty": environment["git_dirty"],
-        "git_status_short": environment["git_status_short"],
-        "hardware": {
-            "platform": environment["platform"],
-            "cuda_devices": cuda_metadata["devices"],
-            "cuda_device_count": cuda_metadata["device_count"],
-        },
-        "cuda_version": cuda_metadata["cuda_version"],
-        "cudnn_version": cuda_metadata["cudnn_version"],
-        "pytorch_version": environment["torch_version"],
-        "python_version": environment["python_version"],
+        "config_path": str(config_path),
+        "config_sha256": sha256_file(config_path),
+        "config": config,
+        "seed": config["seed"],
+        "device": str(device),
+        "environment": environment,
         "model": config["model"],
+        "training_protocol": {
+            "initialization": "official_duplicate_aware_baseline_checkpoint"
+            if initial_checkpoint_metadata
+            else "torchvision_pretrained_weights",
+            "initial_checkpoint": initial_checkpoint_metadata,
+            "clean_fraction": 1.0 - adversarial_fraction,
+            "adversarial_fraction": adversarial_fraction,
+            "pgd": config["adversarial_training"]["pgd"],
+        },
         "dataset": {
             "train_csv": config["train_csv"],
             "val_csv": config["val_csv"],
             "test_csv": config["test_csv"],
+            "train_csv_sha256": sha256_file(config["train_csv"]),
+            "val_csv_sha256": sha256_file(config["val_csv"]),
+            "test_csv_sha256": sha256_file(config["test_csv"]),
             "class_count": len(class_names),
             "class_names": class_names,
             "dataset_manifest_path": config.get("dataset_manifest_path"),
             "split_manifest_path": config.get("split_manifest_path"),
         },
-        "config_path": str(config_path),
-        "config": config,
-        "seed": config["seed"],
-        "device": str(device),
         "output_dir": str(experiment_dir),
         "checkpoint_path": str(checkpoint_path),
         "metrics_path": str(metrics_path),
@@ -412,15 +321,9 @@ def build_metadata(
 
 def main() -> None:
     args = parse_args()
-    config_path = resolve_config_path(args)
-    config = load_yaml_config(config_path)
-
-    if args.no_pretrained:
-        config["pretrained"] = False
-
-    model_name = config["model"]
-    if model_name not in MODEL_ADAPTERS:
-        raise ValueError(f"Unsupported model in config: {model_name}")
+    config = load_yaml_config(args.config)
+    if config["model"] != MODEL_ADAPTER.name:
+        raise ValueError("PGD adversarial training is currently scoped to MobileNetV3 only.")
 
     set_global_seed(
         seed=int(config["seed"]),
@@ -428,7 +331,7 @@ def main() -> None:
         cudnn_benchmark=bool(config.get("cudnn_benchmark", False)),
     )
     device = resolve_device(str(config.get("device", "auto")))
-    experiment_dir, timestamp = create_experiment_dir(config["output_dir"], model_name)
+    experiment_dir, timestamp = create_experiment_dir(config["output_dir"], config["model"])
     checkpoint_path = experiment_dir / "best_model.pth"
     metrics_path = experiment_dir / "metrics.csv"
     run_log_path = experiment_dir / "run.log"
@@ -441,7 +344,7 @@ def main() -> None:
         try:
             run_experiment(
                 config=config,
-                config_path=config_path,
+                config_path=args.config,
                 experiment_dir=experiment_dir,
                 timestamp=timestamp,
                 checkpoint_path=checkpoint_path,
@@ -464,7 +367,9 @@ def run_experiment(
     run_log_path: Path,
     device: torch.device,
 ) -> None:
-    model_name = config["model"]
+    print(f"Adversarial training output directory: {experiment_dir}")
+    print(f"Device: {device}")
+    print(f"PGD training config: {config['adversarial_training']['pgd']}")
 
     dataloaders, class_names = create_dataloaders(
         train_csv=config["train_csv"],
@@ -475,12 +380,13 @@ def run_experiment(
         image_size=int(config["image_size"]),
     )
 
-    adapter = MODEL_ADAPTERS[model_name]
-    model = adapter.build(
+    model = MODEL_ADAPTER.build(
         num_classes=len(class_names),
         pretrained=bool(config.get("pretrained", True)),
-        freeze_backbone=True,
-    ).to(device)
+        freeze_backbone=False,
+    )
+    initial_checkpoint_metadata = load_initial_weights(model, config)
+    model.to(device)
 
     class_weights = None
     if bool(config.get("weighted_loss", False)):
@@ -497,23 +403,27 @@ def run_experiment(
         checkpoint_path=checkpoint_path,
         metrics_path=metrics_path,
         run_log_path=run_log_path,
+        initial_checkpoint_metadata=initial_checkpoint_metadata,
     )
     write_json(metadata, experiment_dir / "experiment_metadata.json")
 
     history: list[dict[str, Any]] = []
     best_state = {
-        "val_loss": float("inf"),
-        "val_accuracy": 0.0,
+        "val_loss_clean": float("inf"),
+        "val_accuracy_clean": 0.0,
         "stage": None,
         "epoch": None,
     }
-    run_training_stage(
+    started_at = time.perf_counter()
+
+    MODEL_ADAPTER.set_backbone_trainable(model, is_trainable=False)
+    run_stage(
         model=model,
         dataloaders=dataloaders,
         criterion=criterion,
         config=config,
         stage_name="head",
-        epochs=int(config["epochs_head"]),
+        epochs=int(config.get("epochs_head", 0)),
         learning_rate=float(config["learning_rate_head"]),
         device=device,
         history=history,
@@ -526,13 +436,13 @@ def run_experiment(
         checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
         model.load_state_dict(checkpoint["model_state_dict"])
 
-    apply_finetune_policy(model, adapter, config)
-    run_training_stage(
+    apply_finetune_policy(model, MODEL_ADAPTER, config)
+    run_stage(
         model=model,
         dataloaders=dataloaders,
         criterion=criterion,
         config=config,
-        stage_name="finetune",
+        stage_name="adversarial_finetune",
         epochs=int(config["epochs_finetune"]),
         learning_rate=float(config["learning_rate_finetune"]),
         device=device,
@@ -542,6 +452,7 @@ def run_experiment(
         class_names=class_names,
     )
 
+    training_elapsed_seconds = time.perf_counter() - started_at
     if not checkpoint_path.exists():
         save_checkpoint(
             model=model,
@@ -553,7 +464,6 @@ def run_experiment(
 
     checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint["model_state_dict"])
-
     pd.DataFrame(history).to_csv(experiment_dir / "history.csv", index=False)
 
     metrics = benchmark_model(
@@ -566,9 +476,11 @@ def run_experiment(
     )
     metrics.update(
         {
-            "model": model_name,
-            "best_val_loss": best_state["val_loss"],
-            "best_val_accuracy": best_state["val_accuracy"],
+            "model": config["model"],
+            "defense": "pgd_adversarial_training",
+            "training_elapsed_seconds": training_elapsed_seconds,
+            "best_val_loss_clean": best_state["val_loss_clean"],
+            "best_val_accuracy_clean": best_state["val_accuracy_clean"],
             "best_stage": best_state["stage"],
             "best_epoch": best_state["epoch"],
         }
@@ -576,10 +488,10 @@ def run_experiment(
     save_benchmark_results(metrics, metrics_path)
 
     metadata["best_validation"] = best_state
+    metadata["training_elapsed_seconds"] = training_elapsed_seconds
     metadata["test_metrics"] = metrics
     write_json(metadata, experiment_dir / "experiment_metadata.json")
-
-    print(f"Saved experiment outputs to: {experiment_dir}")
+    print(f"Saved adversarial-training outputs to: {experiment_dir}")
 
 
 if __name__ == "__main__":

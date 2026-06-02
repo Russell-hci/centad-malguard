@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CenTaD-MalGuard</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23081727'/%3E%3Cpath d='M17 18h30v28H17z' fill='%230f766e'/%3E%3Cpath d='M24 26h16M24 32h16M24 38h10' stroke='%23a7f3d0' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#guidedDemo">Skip to guided demo</a>
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">CenTaD-MalGuard</p>
+        <h1>Adversarial attacks can fool malware classifiers.</h1>
+        <p class="hero-subtitle">
+          CenTaD-MalGuard demonstrates a lightweight MobileNetV3 malware detector
+          hardened with PGD adversarial training, improving robustness while
+          preserving clean accuracy and model size.
+        </p>
+        <div class="trust-row" aria-label="Demo summary">
+          <span>Standard detector fooled</span>
+          <span>MalGuard recovers</span>
+          <span>Finalized evidence only</span>
+        </div>
+        <div class="hero-actions">
+          <button id="heroDemoButton" class="primary-button" type="button">
+            Run 60-second attack demo
+          </button>
+          <a href="#evidenceSection" class="secondary-link">View evidence</a>
+        </div>
+      </div>
+      <div class="metric-strip" aria-label="Headline results">
+        <article>
+          <span>FGSM robustness</span>
+          <strong>18.06% -> 82.87%</strong>
+        </article>
+        <article>
+          <span>PGD-20 robustness</span>
+          <strong>0.29% -> 20.00%</strong>
+        </article>
+        <article>
+          <span>Clean accuracy</span>
+          <strong>97.92% -> 97.35%</strong>
+        </article>
+        <article>
+          <span>Model size</span>
+          <strong>5.934 MB unchanged</strong>
+        </article>
+      </div>
+    </header>
+
+    <main class="shell" id="guidedDemo">
+      <aside class="control-panel" aria-label="Guided demo controls">
+        <section class="panel-section">
+          <div class="section-heading">
+            <span class="step-dot">G</span>
+            <h2>Guided Demo</h2>
+          </div>
+          <p class="panel-copy">
+            Start with the strongest recovery case: a standard detector is fooled
+            by PGD, then MalGuard recovers the correct malware family.
+          </p>
+          <button id="presentationButton" class="primary-button full-width" type="button">
+            Reset to recovery case
+          </button>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading">
+            <span class="step-dot">2</span>
+            <h2>Evasion Attack</h2>
+          </div>
+          <div class="segmented" role="radiogroup" aria-label="Attack type">
+            <button id="fgsmButton" type="button" class="segment" role="radio" aria-checked="false">
+              FGSM
+            </button>
+            <button id="pgdButton" type="button" class="segment active" role="radio" aria-checked="true">
+              PGD
+            </button>
+          </div>
+          <p class="helper-text">
+            PGD is the stronger stress test used for the opening demo.
+          </p>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading">
+            <span class="step-dot">S</span>
+            <h2>Demo Cases</h2>
+          </div>
+          <div class="sequence-list">
+            <button data-sample="05_allaple_a_pgd" data-attack="pgd" type="button">
+              Recovery case
+            </button>
+            <button data-sample="11_c2lop_p_pgd" data-attack="pgd" type="button">
+              Defense limitation
+            </button>
+            <button data-sample="01_dontovo_a_pgd" data-attack="pgd" type="button">
+              Attention focus
+            </button>
+          </div>
+        </section>
+
+        <details class="advanced-details">
+          <summary>Advanced research controls</summary>
+          <label class="field-label" for="sampleSelect">Evidence sample</label>
+          <select id="sampleSelect"></select>
+          <div id="sampleTags" class="tag-row"></div>
+          <p class="helper-text">
+            Finalized duplicate-aware MalImg samples and precomputed attack assets.
+          </p>
+        </details>
+      </aside>
+
+      <section class="story" aria-live="polite">
+        <nav class="stage-nav" aria-label="Guided demo stages" role="tablist">
+          <button class="stage-tab active" data-stage="1" type="button" role="tab" aria-selected="true" aria-controls="stageClean">1 Clean detection</button>
+          <button class="stage-tab" data-stage="2" type="button" role="tab" aria-selected="false" aria-controls="stageAttack">2 Attack launched</button>
+          <button class="stage-tab" data-stage="3" type="button" role="tab" aria-selected="false" aria-controls="stageFooled">3 Detector fooled</button>
+          <button class="stage-tab" data-stage="4" type="button" role="tab" aria-selected="false" aria-controls="stageDefense">4 Defense activated</button>
+          <button class="stage-tab" data-stage="5" type="button" role="tab" aria-selected="false" aria-controls="stageRecovery">5 Prediction recovered</button>
+          <button class="stage-tab" data-stage="6" type="button" role="tab" aria-selected="false" aria-controls="stageExplain">6 Explanation</button>
+        </nav>
+
+        <section class="scenario-card">
+          <div>
+            <p class="eyebrow dark">Live Scenario</p>
+            <h2 id="scenarioTitle">Standard detector scans a malware image.</h2>
+            <p id="scenarioCopy">
+              The demo begins with a real curated test example from the finalized
+              duplicate-aware evaluation split.
+            </p>
+          </div>
+          <div class="scenario-actions">
+            <button id="prevStageButton" class="secondary-button" type="button">Back</button>
+            <button id="nextStageButton" class="primary-button" type="button">Launch attack</button>
+          </div>
+        </section>
+
+        <section class="stage-grid">
+          <article class="stage-card active" data-stage-card="1" id="stageClean" role="tabpanel">
+            <div class="section-heading">
+              <span class="step-dot">1</span>
+              <h2>Clean Detection</h2>
+            </div>
+            <p class="card-copy">
+              The sample starts as a malware image. The standard detector correctly
+              identifies its family before any attack.
+            </p>
+            <img id="cleanImage" alt="Clean malware image sample" />
+            <dl class="compact-facts">
+              <div>
+                <dt>True malware family</dt>
+                <dd id="trueFamily">-</dd>
+              </div>
+              <div>
+                <dt>Standard detector</dt>
+                <dd id="baselineCleanPred">-</dd>
+              </div>
+              <div>
+                <dt>Confidence</dt>
+                <dd id="baselineCleanConfidence">-</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="stage-card" data-stage-card="2" id="stageAttack" role="tabpanel">
+            <div class="section-heading">
+              <span class="step-dot">2</span>
+              <h2>Attack Launched</h2>
+            </div>
+            <p class="card-copy">
+              The evasion attack adds a small, targeted perturbation designed to
+              confuse the classifier.
+            </p>
+            <div class="image-pair">
+              <figure>
+                <img id="attackImage" alt="Attacked malware image" />
+                <figcaption id="attackImageLabel">Attacked image</figcaption>
+              </figure>
+              <figure>
+                <img id="perturbationImage" alt="Perturbation visualization" />
+                <figcaption>Attack perturbation</figcaption>
+              </figure>
+            </div>
+          </article>
+
+          <article class="stage-card threat-card" data-stage-card="3" id="stageFooled" role="tabpanel">
+            <div class="section-heading">
+              <span class="step-dot danger-dot">3</span>
+              <h2>Detector Fooled</h2>
+            </div>
+            <p class="card-copy">
+              The standard detector now predicts the wrong malware family, showing
+              why clean accuracy alone is not enough.
+            </p>
+            <div class="prediction-block">
+              <span>Standard detector after attack</span>
+              <strong id="baselineAttackPred">-</strong>
+            </div>
+            <p id="attackStatus" class="status-line" role="status">-</p>
+          </article>
+
+          <article class="stage-card defense-card" data-stage-card="4" id="stageDefense" role="tabpanel">
+            <div class="section-heading">
+              <span class="step-dot">4</span>
+              <h2>MalGuard Defense Activated</h2>
+            </div>
+            <p class="card-copy">
+              MalGuard uses the adversarially trained MobileNetV3 detector instead
+              of the standard detector.
+            </p>
+            <div class="prediction-block">
+              <span>MalGuard robust detector</span>
+              <strong id="defenseAttackPred">-</strong>
+            </div>
+            <div class="meter defense">
+              <div id="defenseAttackBar"></div>
+            </div>
+          </article>
+
+          <article class="stage-card outcome-card" data-stage-card="5" id="stageRecovery" role="tabpanel">
+            <div class="section-heading">
+              <span class="step-dot">5</span>
+              <h2>Correct Prediction Recovered</h2>
+            </div>
+            <p class="card-copy">
+              The key question: after the attack, does the robust detector recover
+              the true malware family?
+            </p>
+            <p id="defenseStatus" class="verdict-line" role="status">-</p>
+          </article>
+
+          <article class="stage-card explain-card" data-stage-card="6" id="stageExplain" role="tabpanel">
+            <div class="section-heading">
+              <span class="step-dot">6</span>
+              <h2>Explanation And Evidence</h2>
+            </div>
+            <p class="card-copy">
+              Grad-CAM provides supporting evidence: attacks can change what the
+              model focuses on, and adversarial training appears to make attention
+              more stable on representative examples.
+            </p>
+            <img id="comparisonPanel" alt="Grad-CAM comparison panel" />
+            <details class="metrics-card">
+              <summary>Advanced attention metrics</summary>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Top-20% IoU</th>
+                    <th>Center shift</th>
+                  </tr>
+                </thead>
+                <tbody id="attentionMetricRows"></tbody>
+              </table>
+              <p id="attentionFinding" class="metric-note"></p>
+            </details>
+          </article>
+        </section>
+
+        <section class="quant-section" id="evidenceSection">
+          <div class="section-heading">
+            <span class="step-dot">E</span>
+            <h2>Proof From Finalized Evaluation</h2>
+          </div>
+          <p class="section-copy">
+            The robust detector improves adversarial accuracy substantially while
+            keeping clean accuracy high and model size unchanged.
+          </p>
+          <div class="headline-grid">
+            <article>
+              <span>FGSM accuracy</span>
+              <strong>18.06% -> 82.87%</strong>
+            </article>
+            <article>
+              <span>PGD-20 accuracy</span>
+              <strong>0.29% -> 20.00%</strong>
+            </article>
+            <article>
+              <span>Clean accuracy</span>
+              <strong>97.92% -> 97.35%</strong>
+            </article>
+            <article>
+              <span>Model size</span>
+              <strong>5.934 MB unchanged</strong>
+            </article>
+          </div>
+          <details class="research-table">
+            <summary>Technical evidence table</summary>
+            <div class="evidence-layout">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Standard</th>
+                      <th>MalGuard</th>
+                      <th>Change</th>
+                    </tr>
+                  </thead>
+                  <tbody id="evidenceRows"></tbody>
+                </table>
+              </div>
+              <figure class="summary-figure">
+                <img
+                  src="../../results/gradcam/cenTaD_malguard_gradcam/figures/attention_stability_summary.png"
+                  alt="Attention stability summary chart"
+                />
+                <figcaption>Grad-CAM stability summary from curated evidence set</figcaption>
+              </figure>
+            </div>
+          </details>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
