@@ -65,12 +65,16 @@ This archive should be used if a mentor, judge, or evaluator needs the full resu
 
 ## Recommended Cloud Distribution
 
-Use one of these approaches:
+The selected distribution approach for final submission is:
 
 1. **GitHub Release**
-   - Create a release named `final-ssef-artifacts`.
-   - Upload the canonical archive and checksum file as release assets.
-   - Keep the main repository lightweight.
+   - Release: [Final SSEF Artifacts](https://github.com/Russell-hci/centad-malguard/releases/tag/final-ssef-artifacts)
+   - Uploaded assets:
+     - `experiment_artifacts_20260601T120030Z.tar.gz`
+     - `experiment_artifacts_20260601T120030Z.tar.gz.sha256`
+   - This keeps the main repository lightweight while preserving the canonical experiment bundle for evaluators.
+
+Fallback approaches:
 
 2. **Google Drive / OneDrive**
    - Upload the canonical archive and checksum.
@@ -94,4 +98,4 @@ It can be provided separately for verification.
 
 ## Final Recommendation
 
-For SSEF/CenTaD, use GitHub for the polished code/report/demo package and a separate archive link for heavyweight artifacts. This keeps the public repository clean while preserving full reproducibility for evaluators who request raw artifacts.
+For SSEF/CenTaD, use GitHub for the polished code/report/demo package and the GitHub Release for heavyweight artifacts. Keep a local backup on the presentation laptop and external storage for judging day.

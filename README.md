@@ -229,6 +229,10 @@ Checksum:
 01dce774175e0670133fb84e8b11e1b5436efc793666d4bc9200be611637e6bf
 ```
 
+The canonical artifact archive is also published as a GitHub Release:
+
+- [Final SSEF Artifacts](https://github.com/Russell-hci/centad-malguard/releases/tag/final-ssef-artifacts)
+
 ## Limitations
 
 - MalImg is an image representation of malware binaries and may not generalize to raw-byte, dynamic-analysis, or API-sequence malware classifiers.

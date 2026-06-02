@@ -69,7 +69,7 @@ The demo should be rehearsed on the final judging laptop using both the 3-minute
 ## Remaining Non-Blocking Gaps
 
 - Create a formal slide deck file only if the judging process specifically requires PowerPoint; Markdown and browser-printable HTML versions already exist.
-- Decide whether the canonical experiment archive should be distributed by GitHub Release, Google Drive, or local backup.
+- The canonical experiment archive is distributed through the GitHub Release `final-ssef-artifacts`; keep a local backup on the presentation laptop.
 - Run a final live rehearsal on the actual judging machine.
 
 ## Final Positioning
