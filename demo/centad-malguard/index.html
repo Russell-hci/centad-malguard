@@ -11,16 +11,17 @@
     <a class="skip-link" href="#guidedDemo">Skip to guided demo</a>
     <header class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">CenTaD-MalGuard</p>
-        <h1>Adversarial attacks can fool malware classifiers.</h1>
+        <p class="eyebrow">CenTaD-MalGuard | Robustness + Attention Stability</p>
+        <h1>Malware detectors should prove they still work after attack.</h1>
         <p class="hero-subtitle">
-          CenTaD-MalGuard demonstrates a lightweight MobileNetV3 malware detector
-          hardened with PGD adversarial training, improving robustness while
-          preserving clean accuracy and model size.
+          CenTaD-MalGuard is a lightweight malware-defense prototype that stress-tests
+          a detector, activates a PGD-trained robust model, and checks whether model
+          attention stays more stable under attack.
         </p>
         <div class="trust-row" aria-label="Demo summary">
           <span>Standard detector fooled</span>
           <span>MalGuard recovers</span>
+          <span>Attention stability lens</span>
           <span>Finalized evidence only</span>
         </div>
         <div class="hero-actions">
@@ -40,15 +41,42 @@
           <strong>0.29% -> 20.00%</strong>
         </article>
         <article>
-          <span>Clean accuracy</span>
-          <strong>97.92% -> 97.35%</strong>
+          <span>Attention stability, PGD IoU</span>
+          <strong>0.1355 -> 0.3607</strong>
         </article>
         <article>
-          <span>Model size</span>
+          <span>Efficiency cost</span>
           <strong>5.934 MB unchanged</strong>
         </article>
       </div>
     </header>
+
+    <section class="product-lens" aria-label="What makes CenTaD-MalGuard distinct">
+      <article class="lens-lead">
+        <p class="eyebrow dark">Distinct Product Idea</p>
+        <h2>MalGuard is a robustness triage system, not just a classifier.</h2>
+        <p>
+          It shows whether a malware detector still deserves trust after an
+          adversarial attack by combining attack simulation, robust recovery, and
+          Grad-CAM attention-stability evidence.
+        </p>
+      </article>
+      <article>
+        <span>1</span>
+        <strong>Expose hidden failure</strong>
+        <p>A clean-accurate detector collapses from 97.92% clean accuracy to 0.29% under PGD-20.</p>
+      </article>
+      <article>
+        <span>2</span>
+        <strong>Recover with same footprint</strong>
+        <p>PGD adversarial training improves robustness while keeping MobileNetV3 at 5.934 MB.</p>
+      </article>
+      <article>
+        <span>3</span>
+        <strong>Check model focus</strong>
+        <p>Grad-CAM evidence suggests the robust detector keeps more consistent attention under attack.</p>
+      </article>
+    </section>
 
     <main class="shell" id="guidedDemo">
       <aside class="control-panel" aria-label="Guided demo controls">
@@ -235,13 +263,30 @@
           <article class="stage-card explain-card" data-stage-card="6" id="stageExplain" role="tabpanel">
             <div class="section-heading">
               <span class="step-dot">6</span>
-              <h2>Explanation And Evidence</h2>
+              <h2>Attention Stability Lens</h2>
             </div>
             <p class="card-copy">
-              Grad-CAM provides supporting evidence: attacks can change what the
-              model focuses on, and adversarial training appears to make attention
-              more stable on representative examples.
+              Grad-CAM is the product's attention-stability lens. It checks whether
+              the model keeps focusing on similar regions after an attack instead
+              of only reporting a class label.
             </p>
+            <div class="attention-lens">
+              <article>
+                <span>Standard detector, PGD</span>
+                <strong>0.1355</strong>
+                <p>Mean Top-20% attention overlap between clean and attacked inputs.</p>
+              </article>
+              <article>
+                <span>MalGuard, PGD</span>
+                <strong>0.3607</strong>
+                <p>Higher overlap suggests more stable attention on the curated evidence set.</p>
+              </article>
+              <article>
+                <span>Interpretation</span>
+                <strong>Supportive, not absolute</strong>
+                <p>The evidence strengthens the robustness story without claiming semantic understanding.</p>
+              </article>
+            </div>
             <img id="comparisonPanel" alt="Grad-CAM comparison panel" />
             <details class="metrics-card">
               <summary>Advanced attention metrics</summary>

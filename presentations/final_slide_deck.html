@@ -158,13 +158,13 @@
       <div class="content two">
         <div>
           <div class="eyebrow">CenTaD-MalGuard</div>
-          <h1>Adversarial attacks can fool malware classifiers.</h1>
-          <p>Lightweight adversarially robust malware image classification.</p>
+          <h1>Malware detectors should prove they still work after attack.</h1>
+          <p>Lightweight malware reliability for adversarial robustness and attention stability.</p>
         </div>
         <div class="metric-grid">
           <div class="metric"><span>FGSM accuracy</span><strong>18.06% -> 82.87%</strong></div>
           <div class="metric"><span>PGD-20 accuracy</span><strong>0.29% -> 20.00%</strong></div>
-          <div class="metric"><span>Clean accuracy</span><strong>97.92% -> 97.35%</strong></div>
+          <div class="metric"><span>PGD attention IoU</span><strong>0.1355 -> 0.3607</strong></div>
           <div class="metric"><span>Model size</span><strong>5.934 MB unchanged</strong></div>
         </div>
       </div>
@@ -237,10 +237,10 @@
       <div class="content">
         <h2>MalGuard Solution</h2>
         <ul>
-          <li>PGD adversarial training</li>
-          <li>Same MobileNetV3 architecture</li>
-          <li>Same parameter count</li>
-          <li>Same 5.934 MB model size</li>
+          <li>Expose hidden detector failure under attack</li>
+          <li>Recover with PGD-adversarially-trained MobileNetV3</li>
+          <li>Keep the same 5.934 MB model size</li>
+          <li>Audit attention stability with Grad-CAM</li>
         </ul>
       </div>
     </section>
@@ -274,8 +274,8 @@
 
     <section class="slide">
       <div class="content">
-        <h2>Grad-CAM Explanation</h2>
-        <p>Attacks can change what the model focuses on. Adversarial training appears to make attention more stable.</p>
+        <h2>Attention-Stability Insight</h2>
+        <p>Grad-CAM is used as a reliability lens. Attacks can change what the model focuses on, and adversarial training appears to make attention more stable.</p>
         <table>
           <tr><th>Attack</th><th>Standard Top-20 IoU</th><th>MalGuard Top-20 IoU</th></tr>
           <tr><td>FGSM</td><td>0.0905</td><td>0.3364</td></tr>
@@ -300,7 +300,7 @@
       <div class="content">
         <div class="eyebrow">Final Takeaway</div>
         <h1>The attack breaks the standard detector. MalGuard recovers.</h1>
-        <p>CenTaD-MalGuard improves robustness while preserving lightweight deployment efficiency.</p>
+        <p>CenTaD-MalGuard improves robustness while preserving lightweight deployment efficiency, with supporting evidence that robust training may stabilize attention.</p>
       </div>
     </section>
 

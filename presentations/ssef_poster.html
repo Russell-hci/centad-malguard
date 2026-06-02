@@ -170,15 +170,15 @@
       <header class="hero">
         <div>
           <div class="eyebrow">CenTaD-MalGuard</div>
-          <h1>Adversarial attacks can fool malware classifiers.</h1>
+          <h1>Malware detectors should prove they still work after attack.</h1>
           <p class="subtitle">
-            A lightweight MobileNetV3 malware detector hardened with PGD adversarial training.
+            A lightweight malware reliability system for adversarial robustness and attention stability.
           </p>
         </div>
         <div class="metric-grid">
           <div class="metric"><span>FGSM accuracy</span><strong>18.06% -> 82.87%</strong></div>
           <div class="metric"><span>PGD-20 accuracy</span><strong>0.29% -> 20.00%</strong></div>
-          <div class="metric"><span>Clean accuracy</span><strong>97.92% -> 97.35%</strong></div>
+          <div class="metric"><span>PGD attention IoU</span><strong>0.1355 -> 0.3607</strong></div>
           <div class="metric"><span>Model size</span><strong>5.934 MB unchanged</strong></div>
         </div>
       </header>
@@ -240,9 +240,9 @@
         </section>
 
         <section>
-          <h2>Explainability</h2>
+          <h2>Attention Stability</h2>
           <p>
-            Grad-CAM shows that attacks can change what the model focuses on. The robust model shows more stable attention on curated examples.
+            Grad-CAM is used as a reliability lens. It shows that attacks can change what the model focuses on, while the robust model provides supporting attention-stability evidence on curated examples.
           </p>
           <table>
             <tr><th>Attack</th><th>Standard IoU</th><th>MalGuard IoU</th></tr>
@@ -257,8 +257,8 @@
             <li>Duplicate-aware malware classification protocol</li>
             <li>FGSM and PGD robustness evidence</li>
             <li>Lightweight robust MobileNetV3 solution</li>
-            <li>Grad-CAM explainability evidence</li>
-            <li>Judge-facing cybersecurity demo</li>
+            <li>Grad-CAM attention-stability evidence</li>
+            <li>Judge-facing malware reliability demo</li>
           </ul>
         </section>
 
@@ -274,7 +274,7 @@
 
         <section class="takeaway">
           <h2>Final Takeaway</h2>
-          <p>The attack breaks the standard detector. MalGuard recovers.</p>
+          <p>The attack breaks the standard detector. MalGuard recovers and presents attention-stability evidence.</p>
         </section>
       </div>
     </main>

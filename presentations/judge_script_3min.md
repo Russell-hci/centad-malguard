@@ -6,7 +6,7 @@ Explain the project quickly and run the strongest live demo path.
 
 ## Opening: 20 Seconds
 
-Hello, my project is **CenTaD-MalGuard**, a lightweight adversarially robust malware image classification system.
+Hello, my project is **CenTaD-MalGuard**, a lightweight malware reliability system that tests whether a classifier still works after an adversarial attack.
 
 The problem is that a malware classifier can look very accurate on normal test samples but fail when an attacker deliberately changes the input to fool the model. In cybersecurity, clean accuracy is not enough. A detector also needs robustness.
 
@@ -79,14 +79,14 @@ The result:
 - Clean accuracy stayed high: 97.92% to 97.35%.
 - Model size stayed unchanged at 5.934 MB.
 
-Grad-CAM helps explain the behavior visually. It shows that attacks can change what the model focuses on, and adversarial training appears to make attention more stable on representative examples.
+The most distinctive part is the attention-stability finding. Grad-CAM shows that attacks can change what the model focuses on. On representative examples, adversarial training appears to make the model's attention more stable, so MalGuard is not only recovering the label; it is also giving behavioral evidence that the detector is more reliable.
 
 ## Closing: 20 Seconds
 
-The contribution is not that adversarial robustness is solved. The contribution is showing, with a duplicate-aware protocol, that lightweight malware classifiers are highly vulnerable and that PGD adversarial training can substantially improve robustness without increasing model size.
+The contribution is not that adversarial robustness is solved. The contribution is showing, with a duplicate-aware protocol, that lightweight malware classifiers are highly vulnerable, PGD adversarial training can improve robustness without increasing model size, and the robust model may also stabilize attention under attack.
 
 The main takeaway is:
 
 ```text
-The attack breaks the standard detector; MalGuard recovers.
+The attack breaks the standard detector; MalGuard recovers and presents attention-stability evidence.
 ```

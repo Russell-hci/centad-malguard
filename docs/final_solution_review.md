@@ -10,8 +10,8 @@ CenTaD-MalGuard is ready to present as a concrete cybersecurity solution rather 
 
 ```text
 Problem: adversarial attacks can fool malware classifiers.
-Solution: PGD-adversarially-trained MobileNetV3.
-Evidence: large robustness gains with minimal efficiency cost.
+Solution: PGD-adversarially-trained MobileNetV3 plus an attention-stability lens.
+Evidence: large robustness gains, stable model size, and more consistent Grad-CAM attention.
 ```
 
 ## Innovation
@@ -23,8 +23,8 @@ Key innovation points:
 - duplicate-aware split construction using image-content SHA-256 grouping
 - attack-aware evaluation with FGSM, PGD-10, PGD-20, ASR, macro F1, and efficiency metrics
 - PGD adversarial training applied to a lightweight MobileNetV3 detector without increasing model size
-- Grad-CAM evidence package connecting prediction failure to changes in model attention
-- final static demo that shows classify, attack, defend, explain, and quantify in one judge-facing workflow
+- Grad-CAM attention-stability lens connecting prediction failure to changes in model focus
+- final static demo that shows classify, attack, defend, explain attention stability, and quantify in one judge-facing workflow
 
 ## Uniqueness
 
@@ -37,7 +37,7 @@ The unique value is the complete integration. Many projects show clean malware c
 5. Explain behavior with Grad-CAM.
 6. Present the result as a usable cybersecurity demonstration.
 
-This gives judges a complete story instead of isolated experiments.
+This gives judges a complete story instead of isolated experiments. The project should be presented as a reliability system that asks three questions: Can the detector classify clean malware? Can it survive an attack? Does its attention remain more stable after defense?
 
 ## Effectiveness
 
@@ -61,7 +61,7 @@ The demo is judge-ready because it:
 - shows the standard detector succeeding on the clean sample
 - shows PGD fooling the standard detector
 - shows MalGuard recovering the correct family
-- explains Grad-CAM in plain language
+- explains Grad-CAM as an attention-stability reliability check
 - quantifies the official robustness-efficiency result
 
 The demo should be rehearsed on the final judging laptop using both the 3-minute and 5-minute scripts.
@@ -76,4 +76,4 @@ The demo should be rehearsed on the final judging laptop using both the 3-minute
 
 Recommended one-sentence pitch:
 
-> CenTaD-MalGuard shows that malware classifiers can be highly accurate but fragile under attack, and that PGD adversarial training can make a lightweight detector substantially more robust without increasing model size.
+> CenTaD-MalGuard shows that malware classifiers can be highly accurate but fragile under attack, and that PGD adversarial training can make a lightweight detector more robust while also appearing to stabilize model attention.

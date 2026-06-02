@@ -14,7 +14,7 @@ The demo shows:
 - FGSM and PGD attack simulation with precomputed assets
 - robust-model comparison using the adversarially trained MobileNetV3
 - Grad-CAM explainability
-- quantitative robustness-efficiency evidence
+- quantitative robustness-efficiency and attention-stability evidence
 
 This demo does not retrain models, rerun baseline experiments, or generate new attacks. It reads the finalized asset package under:
 
@@ -93,7 +93,7 @@ Then step through the guided stages:
 The intended narrative is:
 
 ```text
-clean prediction -> attack -> failure -> defense -> recovery -> evidence
+clean prediction -> attack -> failure -> defense -> recovery -> attention stability evidence
 ```
 
 ## Recommended Judge Sequence

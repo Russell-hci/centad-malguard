@@ -36,9 +36,9 @@ const STAGE_COPY = {
     next: "Explain evidence",
   },
   6: {
-    title: "Explanation and evaluation support the result.",
+    title: "Attention stability explains why MalGuard is different.",
     copy:
-      "Grad-CAM and robustness metrics show how attacks disrupt behavior and how adversarial training improves robustness.",
+      "Grad-CAM evidence suggests attacks can change what the detector focuses on, while adversarial training makes attention more stable on the curated examples.",
     next: "Restart demo",
   },
 };

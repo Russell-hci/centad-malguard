@@ -4,12 +4,12 @@
 
 **CenTaD-MalGuard**
 
-Lightweight Adversarially Robust Malware Image Classification
+Lightweight Malware Reliability Under Adversarial Attack
 
 Key message:
 
 ```text
-Adversarial attacks can fool malware classifiers. MalGuard improves robustness without increasing model size.
+Adversarial attacks can fool malware classifiers. MalGuard improves robustness without increasing model size and checks whether model attention is more stable.
 ```
 
 ## Slide 2: Problem
@@ -66,7 +66,11 @@ The standard detector is accurate, but not robust.
 
 ## Slide 7: MalGuard Solution
 
-MalGuard uses PGD adversarial training on the same MobileNetV3 architecture.
+MalGuard is a reliability workflow:
+
+1. expose the standard detector's failure under attack
+2. recover with PGD-adversarially-trained MobileNetV3
+3. audit attention stability with Grad-CAM
 
 Design goal:
 
@@ -99,9 +103,9 @@ clean detection -> attack launched -> detector fooled -> MalGuard defense -> pre
 
 The standard detector predicts `Malex.gen!J` after attack. MalGuard recovers `Allaple.A`.
 
-## Slide 10: Grad-CAM Explanation
+## Slide 10: Attention-Stability Insight
 
-Grad-CAM shows where the model focuses.
+Grad-CAM shows where the model focuses. In this project, it is used as an attention-stability lens, not just a visualization.
 
 Simple message:
 
@@ -127,4 +131,4 @@ Attacks can change model attention. Adversarial training appears to make attenti
 Clean accuracy is not enough for cybersecurity.
 ```
 
-CenTaD-MalGuard demonstrates that PGD adversarial training can make a lightweight malware classifier substantially more robust while preserving clean accuracy and model size.
+CenTaD-MalGuard demonstrates that PGD adversarial training can make a lightweight malware classifier substantially more robust while preserving clean accuracy and model size, with supporting evidence that robust training may stabilize attention under attack.

@@ -6,7 +6,7 @@ Use this script when a judge wants a deeper explanation of the full research pro
 
 ## 0:00-0:45 Opening
 
-My project is **CenTaD-MalGuard**, a lightweight adversarially robust malware image classification system.
+My project is **CenTaD-MalGuard**, a lightweight malware reliability system for adversarial robustness and attention stability.
 
 The project asks:
 
@@ -14,7 +14,7 @@ The project asks:
 Can lightweight malware image classifiers remain accurate and robust under adversarial attack while still being efficient enough for practical deployment?
 ```
 
-The final answer is nuanced. Lightweight malware classifiers can be highly accurate, but they are extremely vulnerable to adversarial attacks. PGD adversarial training substantially improves robustness without increasing model size, but robustness is still not fully solved.
+The final answer is nuanced. Lightweight malware classifiers can be highly accurate, but they are extremely vulnerable to adversarial attacks. PGD adversarial training substantially improves robustness without increasing model size, and Grad-CAM evidence suggests it may also stabilize model attention. Robustness is improved, but not fully solved.
 
 ## 0:45-1:40 Background
 
@@ -154,7 +154,7 @@ Allaple.A
 
 So the attack fools the standard detector, but MalGuard recovers the correct family on this example.
 
-## 6:55-7:55 Grad-CAM Explanation
+## 6:55-7:55 Grad-CAM Attention-Stability Lens
 
 Grad-CAM is used to visualize what regions the model focuses on.
 
@@ -174,7 +174,7 @@ On the curated explainability set:
 | Standard | PGD | 0.1355 | 0.0782 |
 | MalGuard | PGD | 0.3607 | 0.0617 |
 
-Higher overlap and lower shift suggest more stable attention. I treat this as supporting evidence, not proof that the model understands malware semantics.
+Higher overlap and lower shift suggest more stable attention. This is the most distinctive behavioral insight in the project: adversarial training appears to improve both prediction robustness and attention stability. I treat this as supporting evidence, not proof that the model understands malware semantics.
 
 ## 7:55-8:50 Contribution
 
@@ -184,8 +184,8 @@ The project contributes:
 2. Clean baseline evidence for MobileNetV3 and EfficientNet-B0.
 3. FGSM and PGD robustness evaluation showing severe vulnerability.
 4. PGD adversarial training showing large robustness gains without increasing model size.
-5. Grad-CAM evidence showing how attacks affect attention.
-6. A polished demo system that communicates the cybersecurity problem and solution clearly.
+5. Grad-CAM evidence showing how attacks affect attention and how robust training may stabilize it.
+6. A polished demo system that communicates the cybersecurity problem, solution, and attention-stability insight clearly.
 
 ## 8:50-9:35 Limitations
 
@@ -207,6 +207,6 @@ The final takeaway is:
 Clean accuracy is not enough for cybersecurity.
 ```
 
-CenTaD-MalGuard shows that a lightweight malware classifier can be highly accurate but vulnerable, and that PGD adversarial training can substantially improve robustness while keeping the model lightweight.
+CenTaD-MalGuard shows that a lightweight malware classifier can be highly accurate but vulnerable, and that PGD adversarial training can substantially improve robustness while keeping the model lightweight. Its distinctive contribution is pairing robustness with attention-stability evidence.
 
 The project does not claim to solve adversarial malware classification. It shows a practical, evidence-backed path toward more robust lightweight malware detection.

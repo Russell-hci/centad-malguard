@@ -6,7 +6,7 @@ Give judges a complete but concise explanation of the research question, method,
 
 ## 0:00-0:30 Opening
 
-My project is **CenTaD-MalGuard**, a lightweight adversarially robust malware image classification system.
+My project is **CenTaD-MalGuard**, a lightweight malware reliability system for adversarial robustness and attention stability.
 
 The core question is:
 
@@ -113,12 +113,12 @@ The important tradeoff is that robustness improved substantially while clean acc
 
 ## 4:35-5:00 Grad-CAM And Closing
 
-Grad-CAM provides a simple visual explanation. It highlights where the model focuses when making a prediction. The evidence suggests that attacks can change what the standard model focuses on, while adversarial training appears to make attention more stable on representative examples.
+Grad-CAM provides the attention-stability lens. It highlights where the model focuses when making a prediction. The evidence suggests that attacks can change what the standard model focuses on, while adversarial training appears to make attention more stable on representative examples. This is what makes the final product more than a classifier: it checks prediction recovery and model behavior under attack.
 
 The limitation is that PGD-20 macro F1 remains low, so robustness is improved but not solved.
 
 Final takeaway:
 
 ```text
-Clean accuracy is not enough for cybersecurity. CenTaD-MalGuard shows that adversarial training can make a lightweight malware classifier more robust without increasing model size.
+Clean accuracy is not enough for cybersecurity. CenTaD-MalGuard shows that adversarial training can make a lightweight malware classifier more robust without increasing model size, and Grad-CAM suggests the robust detector's attention is more stable under attack.
 ```
