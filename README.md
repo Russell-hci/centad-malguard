@@ -1,50 +1,98 @@
-# CenTaD-MalGuard
+# MalGuard-X
 
-**A lightweight malware reliability system for adversarial robustness and attention stability.**
+**Family-balanced adversarial robustness for malware image classification.**
 
-CenTaD-MalGuard shows a concrete cybersecurity problem: a malware classifier can look accurate on clean samples but fail under adversarial attack. The final product does more than return a family label. It stress-tests a detector, activates a PGD-adversarially-trained MobileNetV3 defense, and uses Grad-CAM to check whether model attention remains more stable under attack.
-
-![CenTaD-MalGuard demo](reports/demo_previews/centad-malguard-final-desktop.png)
+MalGuard-X evaluates a malware-family classifier under adversarial attack and strengthens it using family-balanced adversarial training. The core finding is direct: a detector can look excellent on clean malware images and still fail almost completely under PGD attack. MalGuard-X improves aggregate robustness by optimizing adversarial macro F1, not only clean accuracy.
 
 ## 60-Second Summary
 
-**Problem:** Adversarial attacks can fool malware classifiers.
+**Problem:** High clean accuracy is not enough for cybersecurity ML. A standard MobileNetV3 malware image classifier reached **97.92% clean accuracy**, then collapsed to **0.29% accuracy** and **0.07% macro F1** under PGD-20.
 
-**Solution:** CenTaD-MalGuard uses PGD adversarial training plus an attention-stability lens to improve and explain the robustness of a lightweight MobileNetV3 malware detector.
+**Initial defense:** Vanilla PGD adversarial training improved average robustness, but PGD-20 macro F1 remained only **3.16%**, showing severe family-level collapse.
 
-**Result:** Robustness improves substantially with almost no clean-accuracy loss and no model-size increase.
+**Solution:** MalGuard-X uses Family-Balanced Malware Adversarial Training (FB-MalAT): Balanced Softmax Loss, balanced sampling, PGD-10 warm-up, PGD-20 continuation, and robust-min checkpoint selection across PGD-20 and PGD-50.
 
-**Discovery:** On curated Grad-CAM examples, adversarial training not only improves predictions; it also appears to stabilize where the model focuses under attack.
+**Result:** The verified MalGuard-X finalist achieved above **80% accuracy** and above **80% macro F1** under FGSM, PGD-20, and PGD-50 on the duplicate-aware MalImg image-space evaluation.
 
-| Metric | Standard MobileNetV3 | MalGuard Robust MobileNetV3 | Change |
-|---|---:|---:|---:|
-| Clean Accuracy | 97.92% | 97.35% | -0.57 percentage points |
-| FGSM Accuracy, eps=0.03 | 18.06% | 82.87% | +64.80 percentage points |
-| PGD-20 Accuracy | 0.29% | 20.00% | +19.71 percentage points |
-| PGD Top-20% Attention IoU | 0.1355 | 0.3607 | higher overlap |
-| Model Size | 5.934 MB | 5.934 MB | unchanged |
+| Condition | Accuracy | Macro F1 | Worst-Family F1 | Families F1 < 0.50 | Families F1 < 0.80 |
+|---|---:|---:|---:|---:|---:|
+| Clean | 90.39% | 89.86% | 0.00 | 2 | 3 |
+| FGSM eps=0.03 | 88.60% | 85.19% | 0.00 | 3 | 5 |
+| PGD-20 eps=0.03 | 87.10% | 82.77% | 0.00 | 4 | 6 |
+| PGD-50 eps=0.03 | 83.66% | 80.41% | 0.00 | 4 | 7 |
 
-## Why This Matters
+The strongest improvement was PGD-20 macro F1: **3.16% -> 82.77%** compared with the earlier vanilla PGD-adversarially-trained MobileNetV3 defense.
 
-Malware image classification converts malware binaries into image-like representations and classifies malware families with computer vision models. These models can achieve high clean accuracy, but cybersecurity systems must also resist deliberate manipulation.
+## What Makes It Different
 
-This project shows that clean accuracy alone is not enough. The official MobileNetV3 baseline reached **97.92% clean accuracy**, but dropped to **0.29% accuracy under PGD-20**. CenTaD-MalGuard addresses this by adversarially training the same lightweight architecture, improving robustness without increasing parameter count or model size.
+MalGuard-X treats class imbalance as a robustness failure, not just a dataset inconvenience. In malware-family classification, a model that protects only the largest families is unsafe: attackers can exploit fragile families even if aggregate accuracy looks acceptable.
 
-## Innovation
+The project contribution is:
 
-CenTaD-MalGuard is not just a classifier report. It is an end-to-end malware reliability system:
+- a duplicate-aware MalImg evaluation protocol using SHA-256 image-content grouping;
+- FGSM and PGD evidence showing that clean malware classifiers can collapse under attack;
+- a family-balanced adversarial training pipeline that optimizes robust macro F1;
+- robust-min checkpoint selection using PGD-20 and PGD-50 validation macro F1;
+- a static demonstration interface for communicating the attack-defense-explanation story;
+- explicit claim boundaries around the evaluated image-space threat model.
 
-- duplicate-aware malware image evaluation to reduce leakage risk
-- FGSM and PGD attack evidence showing how the standard detector fails
-- PGD adversarial training that hardens MobileNetV3 without increasing model size
-- an attention-stability lens showing how attacks can alter model focus
-- a judge-facing demo that communicates the full security story in minutes
+## Architecture
 
-The main contribution is the robustness-efficiency-attention result: the robust model keeps the **same 5.934 MB footprint** while improving FGSM accuracy from **18.06% to 82.87%**, improving PGD-20 accuracy from **0.29% to 20.00%**, and showing higher PGD Grad-CAM attention overlap on the curated evidence set.
+```mermaid
+flowchart LR
+  A["MalImg malware image"] --> B["Duplicate-aware split"]
+  B --> C["Standard detector baseline"]
+  C --> D["FGSM / PGD evaluation"]
+  D --> E["Vanilla PGD adversarial training"]
+  E --> F["Family-level failure diagnosis"]
+  F --> G["FB-MalAT: balanced softmax + balanced sampling"]
+  G --> H["PGD-10 warm-up"]
+  H --> I["PGD-20 continuation"]
+  I --> J["Robust-min checkpoint selection"]
+  J --> K["MalGuard-X finalist"]
+  K --> L["Robustness metrics + demo"]
+```
+
+## Key Results
+
+### Standard MobileNetV3
+
+| Condition | Accuracy | Macro F1 |
+|---|---:|---:|
+| Clean | 97.92% | 93.53% |
+| FGSM eps=0.03 | 18.06% | 3.22% |
+| PGD-20 eps=0.03 | 0.29% | 0.07% |
+
+### Vanilla PGD-Adversarially-Trained MobileNetV3
+
+| Condition | Accuracy | Macro F1 |
+|---|---:|---:|
+| Clean | 97.35% | 91.90% |
+| FGSM eps=0.03 | 82.87% | 50.96% |
+| PGD-20 eps=0.03 | 20.00% | 3.16% |
+
+### Final MalGuard-X
+
+| Condition | Accuracy | Macro F1 |
+|---|---:|---:|
+| Clean | 90.39% | 89.86% |
+| FGSM eps=0.03 | 88.60% | 85.19% |
+| PGD-20 eps=0.03 | 87.10% | 82.77% |
+| PGD-50 eps=0.03 | 83.66% | 80.41% |
+
+Finalist checkpoint metadata:
+
+```text
+checkpoint: results/fb_malat/finalists/efficientnet_pgd20_from_pgd10_epoch1_snapshot_20260612T1955Z/best_model.pth
+evaluation: results/fb_malat/final_evaluations_pgd20_continuation/efficientnet_b0_20260612T200838Z/metrics.csv
+checkpoint_sha256: 789445971574ac98544635e389c6192296f94aa00be4ea68d2cbffa8256ff909
+```
+
+Large checkpoints and raw datasets are excluded from Git. The hash above identifies the verified local finalist artifact.
 
 ## Demo
 
-Run the local demo from the repository root:
+The repository includes a static guided demo:
 
 ```bash
 python3 -m http.server 8765
@@ -53,198 +101,105 @@ python3 -m http.server 8765
 Open:
 
 ```text
-http://localhost:8765/demo/centad-malguard/
+http://localhost:8765/demo/malguard-x/
 ```
 
-If the project virtual environment is available:
-
-```bash
-./venv/bin/python -m http.server 8765
-```
-
-The judge-facing demo follows this flow:
+The demo follows:
 
 ```text
-clean detection -> attack launched -> detector fooled -> MalGuard defense -> prediction recovered -> attention stability evidence
+clean detection -> attack launched -> detector fooled -> defense activated -> prediction recovered -> explanation and evidence
 ```
 
-Recommended opening example:
-
-```text
-05_allaple_a_pgd
-```
-
-This example shows the standard detector correctly classifying `Allaple.A`, then being fooled by PGD into predicting `Malex.gen!J`, while the MalGuard robust detector recovers `Allaple.A`.
-
-![MalGuard recovery stage](reports/demo_previews/centad-malguard-final-recovery-stage.png)
-
-## System Architecture
-
-```mermaid
-flowchart LR
-  A["MalImg malware image sample"] --> B["Standard MobileNetV3 detector"]
-  B --> C["Clean malware-family prediction"]
-  C --> D["FGSM / PGD attack simulation"]
-  D --> E["Standard detector under attack"]
-  E --> F["Detector fooled"]
-  F --> G["MalGuard robust detector"]
-  G --> H["Recovered prediction"]
-  H --> I["Grad-CAM explanation"]
-  H --> J["Robustness-efficiency evidence"]
-```
-
-## Experimental Design
-
-Official protocol:
-
-- Dataset: MalImg malware image dataset
-- Classes: 25 malware families
-- Split: duplicate-aware train/validation/test split
-- Duplicate control: image-content SHA-256 grouping
-- Baselines: MobileNetV3 Small and EfficientNet-B0
-- Attacks: FGSM and PGD in raw pixel space
-- Defense: PGD adversarial training for MobileNetV3
-- Explainability: Grad-CAM on curated clean, FGSM, and PGD examples
-
-## Key Findings
-
-### 1. Duplicate-aware evaluation matters
-
-The original stratified split had no file-path overlap, but image-content hashing found exact duplicate images across train/validation/test. The project switched to a duplicate-aware protocol that keeps identical content hashes in the same split. All official results use this corrected protocol.
-
-Official duplicate-aware split:
-
-| Split | Samples |
-|---|---:|
-| Train | 6,539 |
-| Validation | 1,405 |
-| Test | 1,395 |
-
-### 2. Lightweight clean baselines are accurate
-
-| Model | Accuracy | Macro F1 | Parameters | Model Size |
-|---|---:|---:|---:|---:|
-| MobileNetV3 Small | 97.92% | 93.53% | 1,543,481 | 5.934 MB |
-| EfficientNet-B0 | 96.06% | 87.99% | 4,039,573 | 15.57 MB |
-
-MobileNetV3 was selected as the primary solution target because it was both more accurate and substantially smaller.
-
-### 3. Adversarial attacks break the standard detector
-
-| Attack | Model | Accuracy | Macro F1 | Attack Success Rate |
-|---|---|---:|---:|---:|
-| FGSM eps=0.03 | MobileNetV3 | 18.06% | 3.22% | 81.63% |
-| PGD-10 eps=0.03 | MobileNetV3 | 0.72% | 0.39% | 99.27% |
-| PGD-20 eps=0.03 | MobileNetV3 | 0.29% | 0.07% | 99.71% |
-
-### 4. PGD adversarial training improves robustness
-
-| Metric | Standard MobileNetV3 | MalGuard Robust MobileNetV3 |
-|---|---:|---:|
-| Clean Accuracy | 97.92% | 97.35% |
-| FGSM Accuracy, eps=0.03 | 18.06% | 82.87% |
-| PGD-10 Accuracy | 0.72% | 42.94% |
-| PGD-20 Accuracy | 0.29% | 20.00% |
-| Parameters | 1,543,481 | 1,543,481 |
-| Model Size | 5.934 MB | 5.934 MB |
-| Latency | 1.259 ms | 1.162 ms |
-
-### 5. Grad-CAM turns explainability into an attention-stability check
-
-Grad-CAM visualizations show that adversarial attacks can change model attention. MalGuard uses this as a reliability signal: if the robust model recovers the correct family and keeps attention more consistent under attack, the defense is more convincing than a prediction label alone. On the curated evidence set, the adversarially trained model had higher Top-20% heatmap overlap and lower center-of-mass shift than the standard model under both FGSM and PGD.
-
-| Model | Attack | Top-20% IoU Mean | Center-Shift Mean |
-|---|---|---:|---:|
-| Standard | FGSM | 0.0905 | 0.1159 |
-| MalGuard | FGSM | 0.3364 | 0.0822 |
-| Standard | PGD | 0.1355 | 0.0782 |
-| MalGuard | PGD | 0.3607 | 0.0617 |
-
-This is supporting evidence, not proof that the model semantically understands malware structure.
+The demo uses precomputed assets where available. It is intended for communication and judging, not for running new training experiments in the browser.
 
 ## Repository Structure
 
 ```text
-attacks/                 FGSM and PGD attack/evaluation code
-configs/                 Official experiment configuration files
-defenses/                PGD adversarial training implementation
-demo/centad-malguard/    Judge-facing static demo application
-docs/                    Demo guide and repository audit
-evaluation/              Metrics, confusion matrix, latency, and benchmark helpers
-manifests/               Dataset/split/environment manifests, local artifact
-models/                  MobileNetV3 and EfficientNet model adapters
-preprocessing/           Dataset loading, verification, transforms, and splitting
-reports/                 Final reports, Grad-CAM report, demo screenshots
-results/                 Local experiment outputs and checkpoints, gitignored
-scripts/                 Dataset download, Runpod setup, archiving, Grad-CAM generation
-training/                Clean baseline training pipeline
-presentations/           SSEF/CenTaD judge scripts
-utils/                   Config, experiment metadata, reproducibility helpers
+README.md                  Public project overview
+PROJECT_REPORT.md          Sanitized research report
+attacks/                   FGSM and PGD attack code
+configs/                   Baseline, attack, defense, and evaluation configs
+datasets/splits_duplicate_aware/
+                            Official duplicate-aware train/val/test split CSVs
+defenses/                  Vanilla PGD-AT and FB-MalAT training code
+demo/malguard-x/           Static guided demonstration app
+evaluation/                Metrics, latency, benchmark, and confusion-matrix helpers
+fb_malat/                  Balanced Softmax and family robustness utilities
+models/                    MobileNetV3 and EfficientNet-B0 adapters
+preprocessing/             Dataset loading, transforms, duplicate-aware splitting
+scripts/                   Dataset download, evaluation, Grad-CAM, and archive helpers
+training/                  Clean baseline training pipeline
+utils/                     Config loading, reproducibility, experiment metadata
 ```
 
-## Important Reports
+## Quick Start
 
-- [Final Research Report](reports/final_research_report.md)
-- [Executive Summary](reports/executive_summary.md)
-- [Grad-CAM Analysis Report](reports/gradcam_analysis_report.md)
-- [Demo Guide](docs/CENTAD_MALGUARD_DEMO_GUIDE.md)
-- [Repository Audit](docs/repository_audit.md)
-- [Artifact Distribution Plan](docs/artifact_distribution.md)
+Create an environment:
 
-## Presentation Package
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-- [Final slide deck, Markdown](presentations/final_slide_deck.md)
-- [Final slide deck, browser HTML](presentations/final_slide_deck.html)
-- [SSEF poster, Markdown](presentations/ssef_poster.md)
-- [SSEF poster, browser-printable HTML](presentations/ssef_poster.html)
-- [3-minute judge script](presentations/judge_script_3min.md)
-- [5-minute judge script](presentations/judge_script_5min.md)
-- [10-minute judge script](presentations/judge_script_10min.md)
+Install the correct CUDA-enabled `torch` and `torchvision` wheels for your machine separately if GPU training is needed. The requirements file intentionally avoids pinning PyTorch so it does not overwrite CUDA-enabled installations.
+
+Run the static demo:
+
+```bash
+python3 -m http.server 8765
+```
+
+Train a clean duplicate-aware baseline:
+
+```bash
+python training/train.py --config configs/mobilenet_duplicate_aware.yaml
+```
+
+Evaluate a trained checkpoint under FGSM/PGD using the corresponding config:
+
+```bash
+python attacks/evaluate_fgsm.py --config configs/fgsm.yaml
+python attacks/evaluate_pgd.py --config configs/pgd.yaml
+```
+
+Run stable FB-MalAT training:
+
+```bash
+python defenses/fb_malat_training.py --config configs/defense/fb_malat/at_bsl_efficientnet_b0_pgd10.yaml
+python defenses/fb_malat_training.py --config configs/defense/fb_malat/at_bsl_efficientnet_b0_pgd20_from_pgd10_robustmin.yaml
+```
+
+Evaluate a MalGuard-X checkpoint:
+
+```bash
+python scripts/evaluate_fb_malat_checkpoint.py \
+  --checkpoint results/fb_malat/finalists/efficientnet_pgd20_from_pgd10_epoch1_snapshot_20260612T1955Z/best_model.pth \
+  --model efficientnet_b0
+```
 
 ## Reproducibility Notes
 
-The project is config-driven. Official configs include:
+- Official conclusions use `datasets/splits_duplicate_aware/`.
+- Exact image-content duplicates are grouped by SHA-256 before splitting.
+- FGSM and PGD perturbations are bounded in raw `[0, 1]` pixel space.
+- Attack Success Rate is computed only over samples correctly classified before attack.
+- Final model selection used validation metrics, not test-set tuning.
+- Large generated artifacts are excluded from Git: raw data, processed data, checkpoints, logs, and result directories.
 
-- `configs/mobilenet_duplicate_aware.yaml`
-- `configs/efficientnet_duplicate_aware.yaml`
-- `configs/fgsm.yaml`
-- `configs/pgd.yaml`
-- `configs/adversarial_training_mobilenet.yaml`
+## Claim Boundary
 
-Important implementation details:
+Valid claim:
 
-- Attacks are performed in raw pixel space, not normalized tensor space.
-- A normalization wrapper applies ImageNet normalization inside the model during attacks.
-- Attack Success Rate is computed over clean-correct samples only.
-- Official results use duplicate-aware splits only.
-- `torch` and `torchvision` are intentionally not pinned in `requirements.txt`; they should come from a CUDA-enabled PyTorch/Runpod base image.
-- For stricter CUDA determinism in future reruns, set `CUBLAS_WORKSPACE_CONFIG=:4096:8` before launching Python.
+> MalGuard-X achieved above 80% test accuracy and above 80% macro F1 under FGSM, PGD-20, and PGD-50 on the official duplicate-aware MalImg image-space evaluation.
 
-Large artifacts such as checkpoints, raw datasets, manifests, and full result directories are gitignored. Locally, the canonical archive is:
+Limitations:
 
-```text
-runpod_artifacts/archives/experiment_artifacts_20260601T120030Z.tar.gz
-```
+- The result is an aggregate robustness result; worst-family F1 remains 0.0.
+- The evaluated threat model is image-space perturbation, not guaranteed functionality-preserving executable malware transformation.
+- AutoAttack and broader adaptive attack evaluations are not included in this public final result.
+- MalImg results may not generalize to raw-byte, dynamic-analysis, or API-sequence malware detectors.
 
-Checksum:
+## Report
 
-```text
-01dce774175e0670133fb84e8b11e1b5436efc793666d4bc9200be611637e6bf
-```
-
-The canonical artifact archive is also published as a GitHub Release:
-
-- [Final SSEF Artifacts](https://github.com/Russell-hci/centad-malguard/releases/tag/final-ssef-artifacts)
-
-## Limitations
-
-- MalImg is an image representation of malware binaries and may not generalize to raw-byte, dynamic-analysis, or API-sequence malware classifiers.
-- The dataset is class-imbalanced.
-- Only exact duplicate image-content leakage was removed; near-duplicates may remain.
-- The evaluated attacks are white-box FGSM and PGD.
-- Only MobileNetV3 was adversarially trained.
-- PGD-20 macro F1 remains low after defense, so family-balanced adversarial robustness is improved but not solved.
-
-## Final Takeaway
-
-CenTaD-MalGuard demonstrates that lightweight malware classifiers can be made substantially more robust to adversarial attacks without increasing model size, and that robustness can be paired with an attention-stability explanation. The project does not claim adversarial robustness is solved; it shows a practical, evidence-backed step toward deployable malware detectors that are evaluated by accuracy, attack resistance, efficiency, and behavior under explanation.
+See [PROJECT_REPORT.md](PROJECT_REPORT.md) for the full sanitized project report.

@@ -131,7 +131,7 @@ class GradCAM:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate CenTaD-MalGuard Grad-CAM evidence assets.",
+        description="Generate MalGuard-X Grad-CAM evidence assets.",
     )
     parser.add_argument("--test-csv", type=Path, default=TEST_CSV)
     parser.add_argument("--baseline-checkpoint", type=Path, default=BASELINE_CHECKPOINT)
@@ -944,13 +944,13 @@ def write_report(
     failure_panel = representative_paths.get("failure_case_comparison_panel")
 
     lines = [
-        "# CenTaD-MalGuard Grad-CAM Analysis Report",
+        "# MalGuard-X Grad-CAM Analysis Report",
         "",
         f"Generated at: `{run_metadata['created_at_utc']}`",
         "",
         "## Methodology",
         "",
-        "This phase generated the explainability evidence package for CenTaD-MalGuard using the finalized duplicate-aware MalImg protocol and the official MobileNetV3 checkpoints. No baseline experiment was rerun and no model was retrained. FGSM and PGD examples were generated only for the curated visualization set so the final demo, poster, and report can show concrete attack and defense behavior.",
+        "This phase generated the explainability evidence package for MalGuard-X using the finalized duplicate-aware MalImg protocol and the official MobileNetV3 checkpoints. No baseline experiment was rerun and no model was retrained. FGSM and PGD examples were generated only for the curated visualization set so the final demo and report can show concrete attack and defense behavior.",
         "",
         f"Target layer: `{target_layer_text}`. This is the final convolutional feature block before MobileNetV3 pooling/classification, so it provides class-discriminative spatial evidence while retaining enough spatial resolution for visual explanation.",
         "",
@@ -1047,7 +1047,7 @@ def write_report(
             "",
             "## Implications for Adversarial Robustness",
             "",
-            "The explainability package reinforces the final CenTaD-MalGuard narrative: attacks disrupt classifier behavior and attention; PGD adversarial training improves robustness and may stabilize attention on representative examples, while strong PGD attacks still expose family-balanced weaknesses. The adversarially trained MobileNetV3 should therefore be presented as a substantially stronger lightweight solution, not as a complete solution to adversarial malware classification.",
+            "The explainability package reinforces the final MalGuard-X narrative: attacks disrupt classifier behavior and attention; PGD adversarial training improves robustness and may stabilize attention on representative examples, while strong PGD attacks still expose family-balanced weaknesses. The adversarially trained MobileNetV3 should therefore be presented as a substantially stronger lightweight solution, not as a complete solution to adversarial malware classification.",
             "",
             "## Reproducibility Notes",
             "",

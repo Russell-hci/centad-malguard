@@ -1,0 +1,13 @@
+attack: pgd
+name: fb_malat_pgd20
+test_csv: datasets/splits_duplicate_aware/test.csv
+batch_size: 32
+num_workers: 8
+image_size: 224
+seed: 42
+device: auto
+epsilon: 0.03
+alpha: 0.003
+steps: 20
+random_start: true
+

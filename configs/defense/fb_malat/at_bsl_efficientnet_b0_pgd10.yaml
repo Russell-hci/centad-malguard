@@ -1,0 +1,60 @@
+model: efficientnet_b0
+method: at_bsl_pgd10
+
+train_csv: datasets/splits_duplicate_aware/train.csv
+val_csv: datasets/splits_duplicate_aware/val.csv
+test_csv: datasets/splits_duplicate_aware/test.csv
+
+batch_size: 24
+eval_batch_size: 24
+num_workers: 8
+image_size: 224
+
+epochs: 30
+learning_rate: 0.00005
+optimizer: adamw
+weight_decay: 0.0001
+grad_clip: 1.0
+
+scheduler:
+  name: cosine
+  finetune_t_max: 30
+  eta_min: 0.000001
+
+early_stopping:
+  patience: 5
+  min_delta: 0.0005
+
+loss:
+  name: balanced_softmax
+  lambda_clean: 0.25
+  lambda_adv: 1.0
+
+adversarial_training:
+  pgd:
+    epsilon: 0.03
+    alpha: 0.003
+    steps: 10
+    random_start: true
+
+validation:
+  selection_metric: pgd20_macro_f1
+  pgd:
+    epsilon: 0.03
+    alpha: 0.003
+    steps: 20
+    random_start: true
+
+balanced_sampler: true
+augmentation:
+  translate: 0.02
+  gaussian_noise_std: 0.0
+
+seed: 48
+deterministic: true
+cudnn_benchmark: false
+device: auto
+pretrained: false
+finetune_trainable_layers: all
+initial_checkpoint_path: results/baseline_duplicate_aware/efficientnet_b0_20260601T100222Z/best_model.pth
+output_dir: results/fb_malat/training

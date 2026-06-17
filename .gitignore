@@ -22,3 +22,15 @@ logs/
 checkpoints/
 tmp/
 temp/
+
+# Public-repository hygiene
+docs/
+reports/
+presentations/
+project_docs/
+MENTOR*
+csit_server.md
+MALGUARD_X_IMPLEMENTATION_PLAN.md
+*_Project_Report.docx
+*_Project_Report.pdf
+CenTaD-*

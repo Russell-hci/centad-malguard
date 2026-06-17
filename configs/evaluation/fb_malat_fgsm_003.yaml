@@ -1,0 +1,9 @@
+attack: fgsm
+name: fb_malat_fgsm_003
+test_csv: datasets/splits_duplicate_aware/test.csv
+batch_size: 32
+num_workers: 8
+image_size: 224
+seed: 42
+device: auto
+epsilon: 0.03
