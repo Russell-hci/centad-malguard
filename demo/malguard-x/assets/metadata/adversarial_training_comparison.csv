@@ -1,9 +1,0 @@
-metric,baseline_mobilenet_v3,adversarially_trained_mobilenet_v3,absolute_change
-Clean Accuracy,0.9792,0.9039,-0.0753
-Clean Macro F1,0.9353,0.8986,-0.0367
-FGSM Accuracy (0.03),0.1806,0.886,0.7054
-FGSM Macro F1 (0.03),0.0322,0.8519,0.8197
-PGD-20 Accuracy,0.0029,0.871,0.8681
-PGD-20 Macro F1,0.0007,0.8277,0.827
-PGD-50 Accuracy,,0.8366,
-PGD-50 Macro F1,,0.8041,

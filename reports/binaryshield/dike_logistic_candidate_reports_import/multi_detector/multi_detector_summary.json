@@ -1,0 +1,197 @@
+{
+  "detector_count": 4,
+  "transformation_count": 2,
+  "candidate_detector": "byte_histogram_logistic",
+  "baseline_detectors": [
+    "byte_histogram_centroid",
+    "hybrid_centroid",
+    "pe_feature_centroid"
+  ],
+  "detector_aggregates": [
+    {
+      "detector": "byte_histogram_centroid",
+      "transformation_count": 1,
+      "metric_count": 1,
+      "robust_min_macro_f1": 0.6711756767484323,
+      "transformed_accuracy_min": 0.8134228187919463,
+      "transformed_macro_f1_min": 0.6711756767484323,
+      "prediction_stability_min": 0.9993288590604027,
+      "attack_success_rate_max": 0.0008244023083264633,
+      "transformed_worst_class_f1_min": 0.4549019607843138,
+      "transformed_classes_below_f1_050_max": 1.0,
+      "transformed_classes_below_f1_080_max": 1.0
+    },
+    {
+      "detector": "byte_histogram_logistic",
+      "transformation_count": 2,
+      "metric_count": 2,
+      "robust_min_macro_f1": 0.9772199119373777,
+      "transformed_accuracy_min": 0.9919463087248322,
+      "transformed_macro_f1_min": 0.9772199119373777,
+      "prediction_stability_min": 1.0,
+      "attack_success_rate_max": 0.0,
+      "transformed_worst_class_f1_min": 0.9589041095890412,
+      "transformed_classes_below_f1_050_max": 0.0,
+      "transformed_classes_below_f1_080_max": 0.0
+    },
+    {
+      "detector": "hybrid_centroid",
+      "transformation_count": 1,
+      "metric_count": 1,
+      "robust_min_macro_f1": 0.5952271492456221,
+      "transformed_accuracy_min": 0.8604026845637583,
+      "transformed_macro_f1_min": 0.5952271492456221,
+      "prediction_stability_min": 1.0,
+      "attack_success_rate_max": 0.0,
+      "transformed_worst_class_f1_min": 0.26760563380281693,
+      "transformed_classes_below_f1_050_max": 1.0,
+      "transformed_classes_below_f1_080_max": 1.0
+    },
+    {
+      "detector": "pe_feature_centroid",
+      "transformation_count": 1,
+      "metric_count": 1,
+      "robust_min_macro_f1": 0.5952271492456221,
+      "transformed_accuracy_min": 0.8604026845637583,
+      "transformed_macro_f1_min": 0.5952271492456221,
+      "prediction_stability_min": 1.0,
+      "attack_success_rate_max": 0.0,
+      "transformed_worst_class_f1_min": 0.26760563380281693,
+      "transformed_classes_below_f1_050_max": 1.0,
+      "transformed_classes_below_f1_080_max": 1.0
+    }
+  ],
+  "rows": [
+    {
+      "transformation": "append_overlay",
+      "detector": "pe_feature_centroid",
+      "clean_accuracy": 0.8604026845637583,
+      "clean_macro_f1": 0.5952271492456221,
+      "transformed_accuracy": 0.8604026845637583,
+      "transformed_macro_f1": 0.5952271492456221,
+      "robust_min_macro_f1": 0.5952271492456221,
+      "prediction_stability": 1.0,
+      "attack_success_rate": 0.0,
+      "transformed_worst_class_f1": 0.26760563380281693,
+      "transformed_classes_below_f1_050": 1.0,
+      "transformed_classes_below_f1_080": 1.0,
+      "evaluated_samples": 1490.0
+    },
+    {
+      "transformation": "append_overlay",
+      "detector": "byte_histogram_centroid",
+      "clean_accuracy": 0.8140939597315436,
+      "clean_macro_f1": 0.6728672327467247,
+      "transformed_accuracy": 0.8134228187919463,
+      "transformed_macro_f1": 0.6711756767484323,
+      "robust_min_macro_f1": 0.6711756767484323,
+      "prediction_stability": 0.9993288590604027,
+      "attack_success_rate": 0.0008244023083264633,
+      "transformed_worst_class_f1": 0.4549019607843138,
+      "transformed_classes_below_f1_050": 1.0,
+      "transformed_classes_below_f1_080": 1.0,
+      "evaluated_samples": 1490.0
+    },
+    {
+      "transformation": "append_overlay",
+      "detector": "hybrid_centroid",
+      "clean_accuracy": 0.8604026845637583,
+      "clean_macro_f1": 0.5952271492456221,
+      "transformed_accuracy": 0.8604026845637583,
+      "transformed_macro_f1": 0.5952271492456221,
+      "robust_min_macro_f1": 0.5952271492456221,
+      "prediction_stability": 1.0,
+      "attack_success_rate": 0.0,
+      "transformed_worst_class_f1": 0.26760563380281693,
+      "transformed_classes_below_f1_050": 1.0,
+      "transformed_classes_below_f1_080": 1.0,
+      "evaluated_samples": 1490.0
+    },
+    {
+      "transformation": "append_overlay",
+      "detector": "byte_histogram_logistic",
+      "clean_accuracy": 0.9919463087248322,
+      "clean_macro_f1": 0.9772199119373777,
+      "transformed_accuracy": 0.9919463087248322,
+      "transformed_macro_f1": 0.9772199119373777,
+      "robust_min_macro_f1": 0.9772199119373777,
+      "prediction_stability": 1.0,
+      "attack_success_rate": 0.0,
+      "transformed_worst_class_f1": 0.9589041095890412,
+      "transformed_classes_below_f1_050": 0.0,
+      "transformed_classes_below_f1_080": 0.0,
+      "evaluated_samples": 1490.0
+    },
+    {
+      "transformation": "section_slack",
+      "detector": "byte_histogram_logistic",
+      "clean_accuracy": 0.99322951929587,
+      "clean_macro_f1": 0.9808817438127784,
+      "transformed_accuracy": 0.99322951929587,
+      "transformed_macro_f1": 0.9808817438127784,
+      "robust_min_macro_f1": 0.9808817438127784,
+      "prediction_stability": 1.0,
+      "attack_success_rate": 0.0,
+      "transformed_worst_class_f1": 0.9655172413793104,
+      "transformed_classes_below_f1_050": 0.0,
+      "transformed_classes_below_f1_080": 0.0,
+      "evaluated_samples": 1477.0
+    }
+  ],
+  "candidate_comparison": {
+    "status": "PASS",
+    "metrics_beaten": 6,
+    "target": "candidate beats strongest baseline on >= 2 robustness metrics",
+    "metric_results": [
+      {
+        "metric": "robust_min_macro_f1",
+        "status": "BEATS_BASELINE",
+        "candidate": 0.9772199119373777,
+        "strongest_baseline": 0.6711756767484323
+      },
+      {
+        "metric": "transformed_accuracy",
+        "status": "BEATS_BASELINE",
+        "candidate": 0.9919463087248322,
+        "strongest_baseline": 0.8604026845637583
+      },
+      {
+        "metric": "transformed_macro_f1",
+        "status": "BEATS_BASELINE",
+        "candidate": 0.9772199119373777,
+        "strongest_baseline": 0.6711756767484323
+      },
+      {
+        "metric": "prediction_stability",
+        "status": "DOES_NOT_BEAT_BASELINE",
+        "candidate": 1.0,
+        "strongest_baseline": 1.0
+      },
+      {
+        "metric": "attack_success_rate",
+        "status": "DOES_NOT_BEAT_BASELINE",
+        "candidate": 0.0,
+        "strongest_baseline": 0.0
+      },
+      {
+        "metric": "transformed_worst_class_f1",
+        "status": "BEATS_BASELINE",
+        "candidate": 0.9589041095890412,
+        "strongest_baseline": 0.4549019607843138
+      },
+      {
+        "metric": "transformed_classes_below_f1_050",
+        "status": "BEATS_BASELINE",
+        "candidate": 0.0,
+        "strongest_baseline": 1.0
+      },
+      {
+        "metric": "transformed_classes_below_f1_080",
+        "status": "BEATS_BASELINE",
+        "candidate": 0.0,
+        "strongest_baseline": 1.0
+      }
+    ]
+  },
+  "claim_boundary": "This summary compares detectors only on the supplied transfer matrix. It does not validate malware behavior preservation beyond the validation records used during evaluation."
+}

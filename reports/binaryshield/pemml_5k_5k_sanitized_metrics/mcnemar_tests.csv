@@ -1,0 +1,9 @@
+comparison,n,b_clean_correct_transformed_incorrect,c_clean_incorrect_transformed_correct,p_value_exact_binomial,method,b_a_correct_b_incorrect,c_a_incorrect_b_correct
+clean_vs_append,1495,6.0,3.0,0.5078125,exact two-sided binomial McNemar test,,
+byte_histogram_logistic_vs_byte_histogram_centroid_append,1495,,,2.0284990635262115e-51,exact two-sided binomial McNemar test,390.0,77.0
+byte_histogram_logistic_vs_hybrid_centroid_append,1495,,,2.925658947531305e-109,exact two-sided binomial McNemar test,637.0,79.0
+byte_histogram_logistic_vs_pe_feature_centroid_append,1495,,,2.925658947531305e-109,exact two-sided binomial McNemar test,637.0,79.0
+clean_vs_slack,1327,2.0,2.0,1.0,exact two-sided binomial McNemar test,,
+byte_histogram_logistic_vs_byte_histogram_centroid_slack,1327,,,2.261813910576579e-52,exact two-sided binomial McNemar test,370.0,66.0
+byte_histogram_logistic_vs_hybrid_centroid_slack,1327,,,6.497305650593763e-115,exact two-sided binomial McNemar test,638.0,71.0
+byte_histogram_logistic_vs_pe_feature_centroid_slack,1327,,,6.497305650593763e-115,exact two-sided binomial McNemar test,638.0,71.0

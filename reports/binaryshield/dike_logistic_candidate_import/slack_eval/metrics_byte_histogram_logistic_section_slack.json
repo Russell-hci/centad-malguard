@@ -1,0 +1,13 @@
+{
+  "clean_accuracy": 0.99322951929587,
+  "clean_macro_f1": 0.9808817438127784,
+  "transformed_accuracy": 0.99322951929587,
+  "transformed_macro_f1": 0.9808817438127784,
+  "robust_min_macro_f1": 0.9808817438127784,
+  "prediction_stability": 1.0,
+  "attack_success_rate": 0.0,
+  "transformed_worst_class_f1": 0.9655172413793104,
+  "transformed_classes_below_f1_050": 0.0,
+  "transformed_classes_below_f1_080": 0.0,
+  "evaluated_samples": 1477.0
+}

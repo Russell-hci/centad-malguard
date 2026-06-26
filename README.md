@@ -1,205 +1,75 @@
-# MalGuard-X
+# BinaryShield: PE-Aware Malware Robustness Auditing
 
-**Family-balanced adversarial robustness for malware image classification.**
+BinaryShield is a PE-aware robustness audit framework for static malware detectors. It evaluates detector stability under controlled append-overlay and section-slack PE transformations, validates transformed files structurally, compares detector families, computes statistical evidence, and exports sanitized robustness reports.
 
-MalGuard-X evaluates a malware-family classifier under adversarial attack and strengthens it using family-balanced adversarial training. The core finding is direct: a detector can look excellent on clean malware images and still fail almost completely under PGD attack. MalGuard-X improves aggregate robustness by optimizing adversarial macro F1, not only clean accuracy.
+BinaryShield does not ship malware samples, does not execute malware, and does not claim universal evasion resistance.
 
-## 60-Second Summary
+## Problem
 
-**Problem:** High clean accuracy is not enough for cybersecurity ML. A standard MobileNetV3 malware image classifier reached **97.92% clean accuracy**, then collapsed to **0.29% accuracy** and **0.07% macro F1** under PGD-20.
+Clean malware detector accuracy can hide fragility. The project began with CenTaD-MalGuard image-space experiments, where a MobileNetV3 malware-image classifier achieved strong clean performance but collapsed under PGD attacks. BinaryShield is the final project direction because it moves the audit closer to raw Windows PE files and makes validation failures visible instead of hiding them.
 
-**Initial defense:** Vanilla PGD adversarial training improved average robustness, but PGD-20 macro F1 remained only **3.16%**, showing severe family-level collapse.
+## Key Findings
 
-**Solution:** MalGuard-X uses Family-Balanced Malware Adversarial Training (FB-MalAT): Balanced Softmax Loss, balanced sampling, PGD-10 warm-up, PGD-20 continuation, and robust-min checkpoint selection across PGD-20 and PGD-50.
+| Evidence track | Result | Boundary |
+| --- | --- | --- |
+| MalGuard image-space baseline | MobileNetV3 clean accuracy `0.979211`, clean macro F1 `0.935261`; PGD-20 accuracy `0.002867`, PGD-20 macro F1 `0.000706` | Shows clean accuracy did not imply robustness |
+| First PGD adversarial training | PGD-20 macro F1 improved to `0.031593` | Still weak family-balanced robustness |
+| FB-MalAT image-space continuation | Aggregate 80/80 target reached under FGSM, PGD-20, and PGD-50 | Worst-family F1 remained `0.000000`; image-space only |
+| Dike PE evidence | `byte_histogram_logistic` append robust-min macro F1 `0.977220`, slack robust-min macro F1 `0.980882`, stability `1.000000`, ASR `0.000000`, acceptance `PASS` | Initial accepted raw-PE evidence |
+| PEMML external subset | 10,000 raw PE files: 5,000 malware + 5,000 benign. Clean macro F1 `0.906000`, append robust macro F1 `0.894983`, slack robust macro F1 `0.889822`, append stability `0.993980`, slack stability `0.996986` | External subset validation, not full PEMML |
+| PEMML statistical analysis | Append delta `0.002000`, CI `[-0.001516, 0.005996]`; slack delta `-0.000082`, CI `[-0.003163, 0.002934]`; McNemar p-values `0.507812` and `1.000000` | Append/slack degradation was not statistically significant on paired evaluable rows |
+| PEMML acceptance gate | Candidate acceptance `FAIL` due to original strict slack structural gate | Root cause identified and patched; expensive full rerun intentionally not performed |
+| ClamAV baseline | Scan-only baseline script implemented | Official signature database unavailable due FreshClam CDN 403/429 cooldown; no ClamAV metrics claimed |
 
-**Result:** The verified MalGuard-X finalist achieved above **80% accuracy** and above **80% macro F1** under FGSM, PGD-20, and PGD-50 on the duplicate-aware MalImg image-space evaluation.
+## What BinaryShield Does
 
-| Condition | Accuracy | Macro F1 | Worst-Family F1 | Families F1 < 0.50 | Families F1 < 0.80 |
-|---|---:|---:|---:|---:|---:|
-| Clean | 90.39% | 89.86% | 0.00 | 2 | 3 |
-| FGSM eps=0.03 | 88.60% | 85.19% | 0.00 | 3 | 5 |
-| PGD-20 eps=0.03 | 87.10% | 82.77% | 0.00 | 4 | 6 |
-| PGD-50 eps=0.03 | 83.66% | 80.41% | 0.00 | 4 | 7 |
+- Builds sanitized manifests for PE datasets.
+- Extracts PE structural features and 256-bin normalized byte histograms.
+- Trains transparent detector families including centroid baselines and class-balanced byte-histogram logistic regression.
+- Applies deterministic append-overlay and section-slack transformations.
+- Validates transformed files structurally with static PE checks.
+- Computes clean/transformed metrics, prediction stability, attack success rate, confidence intervals, paired tests, and detector comparisons.
+- Exports sanitized Markdown/CSV/JSON evidence without committing raw malware.
 
-The strongest improvement was PGD-20 macro F1: **3.16% -> 82.77%** compared with the earlier vanilla PGD-adversarially-trained MobileNetV3 defense.
+## Public Repository Contents
 
-## What Makes It Different
+- `binaryshield/`: PE parsing, transformation, validation, evaluation, detector, and dataset helper code.
+- `scripts/`: command-line tools for manifests, training/evaluation, evidence export, statistical analysis, ClamAV scan-only baselines, and RCA.
+- `tests/`: synthetic and fixture-based tests that do not require private malware datasets.
+- `docs/`: source-grounded audits, acceptance gates, detector explanations, and final narrative.
+- `reports/`: final paper, judge summary, verified metrics, robustness card, ClamAV blocker, slack RCA, and sanitized evidence tables.
+- `assets/figures/`: safe generated figures for the final report.
 
-MalGuard-X treats class imbalance as a robustness failure, not just a dataset inconvenience. In malware-family classification, a model that protects only the largest families is unsafe: attackers can exploit fragile families even if aggregate accuracy looks acceptable.
+## Intentionally Excluded
 
-The project contribution is:
+This public release excludes raw malware, benign PE datasets, transformed binaries, PEMML/Dike archives, ClamAV databases, model checkpoints, virtual environments, local run folders, logs, and private filesystem paths.
 
-- a duplicate-aware MalImg evaluation protocol using SHA-256 image-content grouping;
-- FGSM and PGD evidence showing that clean malware classifiers can collapse under attack;
-- a family-balanced adversarial training pipeline that optimizes robust macro F1;
-- robust-min checkpoint selection using PGD-20 and PGD-50 validation macro F1;
-- a static demonstration interface for communicating the attack-defense-explanation story;
-- explicit claim boundaries around the evaluated image-space threat model.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  A["MalImg malware image"] --> B["Duplicate-aware split"]
-  B --> C["Standard detector baseline"]
-  C --> D["FGSM / PGD evaluation"]
-  D --> E["Vanilla PGD adversarial training"]
-  E --> F["Family-level failure diagnosis"]
-  F --> G["FB-MalAT: balanced softmax + balanced sampling"]
-  G --> H["PGD-10 warm-up"]
-  H --> I["PGD-20 continuation"]
-  I --> J["Robust-min checkpoint selection"]
-  J --> K["MalGuard-X finalist"]
-  K --> L["Robustness metrics + demo"]
-```
-
-## Key Results
-
-### Standard MobileNetV3
-
-| Condition | Accuracy | Macro F1 |
-|---|---:|---:|
-| Clean | 97.92% | 93.53% |
-| FGSM eps=0.03 | 18.06% | 3.22% |
-| PGD-20 eps=0.03 | 0.29% | 0.07% |
-
-### Vanilla PGD-Adversarially-Trained MobileNetV3
-
-| Condition | Accuracy | Macro F1 |
-|---|---:|---:|
-| Clean | 97.35% | 91.90% |
-| FGSM eps=0.03 | 82.87% | 50.96% |
-| PGD-20 eps=0.03 | 20.00% | 3.16% |
-
-### Final MalGuard-X
-
-| Condition | Accuracy | Macro F1 |
-|---|---:|---:|
-| Clean | 90.39% | 89.86% |
-| FGSM eps=0.03 | 88.60% | 85.19% |
-| PGD-20 eps=0.03 | 87.10% | 82.77% |
-| PGD-50 eps=0.03 | 83.66% | 80.41% |
-
-Finalist checkpoint metadata:
-
-```text
-checkpoint: results/fb_malat/finalists/efficientnet_pgd20_from_pgd10_epoch1_snapshot_20260612T1955Z/best_model.pth
-evaluation: results/fb_malat/final_evaluations_pgd20_continuation/efficientnet_b0_20260612T200838Z/metrics.csv
-checkpoint_sha256: 789445971574ac98544635e389c6192296f94aa00be4ea68d2cbffa8256ff909
-```
-
-Large checkpoints and raw datasets are excluded from Git. The hash above identifies the verified local finalist artifact.
-
-## Demo
-
-The repository includes a static guided demo:
+## Run Tests
 
 ```bash
-python3 -m http.server 8765
+python3 -m pip install -r requirements.txt
+python3 -m compileall binaryshield scripts tests
+python3 -m unittest discover -s tests -p 'test_binaryshield*.py'
 ```
 
-Open:
+## Reproduce With Your Own PE Dataset
 
-```text
-http://localhost:8765/demo/malguard-x/
-```
-
-The demo follows:
-
-```text
-clean detection -> attack launched -> detector fooled -> defense activated -> prediction recovered -> explanation and evidence
-```
-
-The demo uses precomputed assets where available. It is intended for communication and judging, not for running new training experiments in the browser.
-
-## Repository Structure
-
-```text
-README.md                  Public project overview
-PROJECT_REPORT.md          Sanitized research report
-attacks/                   FGSM and PGD attack code
-configs/                   Baseline, attack, defense, and evaluation configs
-datasets/splits_duplicate_aware/
-                            Official duplicate-aware train/val/test split CSVs
-defenses/                  Vanilla PGD-AT and FB-MalAT training code
-demo/malguard-x/           Static guided demonstration app
-evaluation/                Metrics, latency, benchmark, and confusion-matrix helpers
-fb_malat/                  Balanced Softmax and family robustness utilities
-models/                    MobileNetV3 and EfficientNet-B0 adapters
-preprocessing/             Dataset loading, transforms, duplicate-aware splitting
-scripts/                   Dataset download, evaluation, Grad-CAM, and archive helpers
-training/                  Clean baseline training pipeline
-utils/                     Config loading, reproducibility, experiment metadata
-```
-
-## Quick Start
-
-Create an environment:
+Provide your own authorized dataset outside the repository, then build a manifest and run the pipeline. Example shape:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+python3 scripts/binaryshield_build_pemml_manifest.py   --samples-csv /path/to/pemml/samples.csv   --dataset-root /path/to/pemml   --output /path/to/manifests/pemml_5k_5k_manifest.csv   --summary-output reports/binaryshield/pemml_5k_5k_manifest_summary.json   --mode balanced-subset   --malware-count 5000   --benign-count 5000   --seed 1337
+
+python3 scripts/binaryshield_run_pipeline.py   --manifest /path/to/manifests/pemml_5k_5k_manifest.csv   --root-dir /path/to/pemml/samples   --output-dir /path/to/runs/pemml_5k_5k/results   --report-dir /path/to/runs/pemml_5k_5k/reports   --target label   --model-types centroid byte_histogram_centroid hybrid_centroid byte_histogram_logistic   --candidate-model-type byte_histogram_logistic   --skip-strongest-n
 ```
 
-Install the correct CUDA-enabled `torch` and `torchvision` wheels for your machine separately if GPU training is needed. The requirements file intentionally avoids pinning PyTorch so it does not overwrite CUDA-enabled installations.
+Use external storage for datasets and runs. Commit only sanitized reports.
 
-Run the static demo:
+## Safety And Ethics
 
-```bash
-python3 -m http.server 8765
-```
+Use BinaryShield only for defensive evaluation and research. Do not execute malware outside an approved isolated environment. Do not upload malware samples to third-party scanners unless you understand the sharing policies. See `SECURITY_AND_ETHICS.md`.
 
-Train a clean duplicate-aware baseline:
+## Claim Boundaries
 
-```bash
-python training/train.py --config configs/mobilenet_duplicate_aware.yaml
-```
+BinaryShield is an audit framework, not an antivirus product. It does not prove malware functionality preservation, does not prove universal adversarial robustness, does not claim full PEMML validation, does not claim commercial antivirus superiority, and does not include Level 3 dynamic sandbox validation.
 
-Evaluate a trained checkpoint under FGSM/PGD using the corresponding config:
-
-```bash
-python attacks/evaluate_fgsm.py --config configs/fgsm.yaml
-python attacks/evaluate_pgd.py --config configs/pgd.yaml
-```
-
-Run stable FB-MalAT training:
-
-```bash
-python defenses/fb_malat_training.py --config configs/defense/fb_malat/at_bsl_efficientnet_b0_pgd10.yaml
-python defenses/fb_malat_training.py --config configs/defense/fb_malat/at_bsl_efficientnet_b0_pgd20_from_pgd10_robustmin.yaml
-```
-
-Evaluate a MalGuard-X checkpoint:
-
-```bash
-python scripts/evaluate_fb_malat_checkpoint.py \
-  --checkpoint results/fb_malat/finalists/efficientnet_pgd20_from_pgd10_epoch1_snapshot_20260612T1955Z/best_model.pth \
-  --model efficientnet_b0
-```
-
-## Reproducibility Notes
-
-- Official conclusions use `datasets/splits_duplicate_aware/`.
-- Exact image-content duplicates are grouped by SHA-256 before splitting.
-- FGSM and PGD perturbations are bounded in raw `[0, 1]` pixel space.
-- Attack Success Rate is computed only over samples correctly classified before attack.
-- Final model selection used validation metrics, not test-set tuning.
-- Large generated artifacts are excluded from Git: raw data, processed data, checkpoints, logs, and result directories.
-
-## Claim Boundary
-
-Valid claim:
-
-> MalGuard-X achieved above 80% test accuracy and above 80% macro F1 under FGSM, PGD-20, and PGD-50 on the official duplicate-aware MalImg image-space evaluation.
-
-Limitations:
-
-- The result is an aggregate robustness result; worst-family F1 remains 0.0.
-- The evaluated threat model is image-space perturbation, not guaranteed functionality-preserving executable malware transformation.
-- AutoAttack and broader adaptive attack evaluations are not included in this public final result.
-- MalImg results may not generalize to raw-byte, dynamic-analysis, or API-sequence malware detectors.
-
-## Report
-
-See [PROJECT_REPORT.md](PROJECT_REPORT.md) for the full sanitized project report.
+License: not specified yet.

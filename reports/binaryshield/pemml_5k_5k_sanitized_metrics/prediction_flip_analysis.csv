@@ -1,0 +1,3 @@
+condition,n,clean_correct_to_transformed_incorrect,clean_incorrect_to_transformed_correct,unchanged_correct,unchanged_incorrect,total_prediction_flips,total_label_correctness_flips
+append,1495,6,3,1335,151,9,9
+slack,1327,2,2,1181,142,4,4

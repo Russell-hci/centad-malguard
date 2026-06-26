@@ -1,0 +1,158 @@
+{
+  "overall_status": "PASS",
+  "gates": [
+    {
+      "name": "PE parse success",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 0.95",
+      "evidence": "/tmp/binaryshield_dike_run/reports/dike_append_calibrated_fast/manifest_validation/validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Feature extraction success",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 0.95",
+      "evidence": "/tmp/binaryshield_dike_run/reports/dike_append_calibrated_fast/manifest_validation/validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Append prediction stability",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 0.85",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/metrics_byte_histogram_logistic_append_overlay.json",
+      "note": ""
+    },
+    {
+      "name": "Append transformed F1",
+      "status": "PASS",
+      "observed": 0.9772199119373777,
+      "target": ">= 0.85",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/metrics_byte_histogram_logistic_append_overlay.json",
+      "note": ""
+    },
+    {
+      "name": "Append attack success rate",
+      "status": "PASS",
+      "observed": 0.0,
+      "target": "<= 0.70",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/metrics_byte_histogram_logistic_append_overlay.json",
+      "note": ""
+    },
+    {
+      "name": "Append validation JSON generation",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 1.00",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/validation_summary/transformation_validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Append transformed PE parse success",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 0.98",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/validation_summary/transformation_validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Append entry point unchanged",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 1.00",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/validation_summary/transformation_validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Append executable sections unchanged",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 1.00",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/validation_summary/transformation_validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Append Robustness Card coverage",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 1.00",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/card_summary/robustness_card_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Slack transformed F1",
+      "status": "PASS",
+      "observed": 0.9808817438127784,
+      "target": ">= 0.70",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/slack_eval/metrics_byte_histogram_logistic_section_slack.json",
+      "note": ""
+    },
+    {
+      "name": "Slack validation JSON generation",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 1.00",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/slack_eval/validation_summary/transformation_validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Slack transformed PE parse success",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 0.90",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/slack_eval/validation_summary/transformation_validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Slack entry point unchanged",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 1.00",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/slack_eval/validation_summary/transformation_validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Slack executable sections unchanged",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 1.00",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/slack_eval/validation_summary/transformation_validation_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Slack Robustness Card coverage",
+      "status": "PASS",
+      "observed": 1.0,
+      "target": ">= 1.00",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/slack_eval/card_summary/robustness_card_summary.json",
+      "note": ""
+    },
+    {
+      "name": "Multiple detector families",
+      "status": "PASS",
+      "observed": 4.0,
+      "target": ">= 2",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/combined_transfer_matrix.json",
+      "note": ""
+    },
+    {
+      "name": "Transfer-style evaluation",
+      "status": "PASS",
+      "observed": 2.0,
+      "target": ">= 1 transformation",
+      "evidence": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/combined_transfer_matrix.json",
+      "note": ""
+    },
+    {
+      "name": "Candidate beats strongest baseline",
+      "status": "PASS",
+      "observed": 6.0,
+      "target": ">= 2 robustness metrics",
+      "evidence": "/tmp/binaryshield_dike_run/reports/dike_logistic_candidate/multi_detector/multi_detector_summary.json",
+      "note": ""
+    }
+  ],
+  "claim_boundary": "PASS means the supplied artifacts satisfy BinaryShield's configured gates. It does not imply full malware behavior preservation without Level 3 sandbox evidence."
+}

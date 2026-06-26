@@ -1,0 +1,34 @@
+{
+  "validation_dir": "/tmp/binaryshield_dike_run/results/dike_logistic_candidate/append_eval/validation/append_overlay",
+  "validation_json_count": 1490,
+  "expected_count": 1490,
+  "validation_json_generation_rate": 1.0,
+  "transformation_types": [
+    "append_overlay"
+  ],
+  "overall": {
+    "record_count": 1490.0,
+    "pe_parse_original_rate": 1.0,
+    "pe_parse_transformed_rate": 1.0,
+    "entry_point_unchanged_rate": 1.0,
+    "section_count_valid_rate": 1.0,
+    "executable_sections_unchanged_rate": 1.0,
+    "allowed_for_evaluation_rate": 1.0,
+    "level2_or_higher_rate": 1.0,
+    "level3_rate": 0.0
+  },
+  "by_transformation": {
+    "append_overlay": {
+      "record_count": 1490.0,
+      "pe_parse_original_rate": 1.0,
+      "pe_parse_transformed_rate": 1.0,
+      "entry_point_unchanged_rate": 1.0,
+      "section_count_valid_rate": 1.0,
+      "executable_sections_unchanged_rate": 1.0,
+      "allowed_for_evaluation_rate": 1.0,
+      "level2_or_higher_rate": 1.0,
+      "level3_rate": 0.0
+    }
+  },
+  "claim_boundary": "Validation summary covers structural PE-preservation records only. It does not prove runtime behavior preservation without sandbox evidence."
+}

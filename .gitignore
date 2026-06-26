@@ -1,36 +1,59 @@
-venv/
-.venv/
-__pycache__/
-*.py[cod]
-.ipynb_checkpoints/
-.DS_Store
-.env
-.claude-flow/
-*.pth
-*.pt
-*.ckpt
-*.tar
-*.tar.gz
+# Malware datasets and binaries
+/datasets/
+/data/
+/downloads/
+/samples/
+/malware/
+/benign/
+*.exe
+*.dll
+*.sys
+*.scr
+*.com
+*.msi
+*.bin
+*.7z
 *.zip
-datasets/raw/
-datasets/processed/
-datasets/splits/*.csv
-results/
-manifests/
-runpod_artifacts/
-logs/
-checkpoints/
-tmp/
-temp/
+*.rar
+*.tar
+*.gz
 
-# Public-repository hygiene
-docs/
-reports/
-presentations/
-project_docs/
-MENTOR*
-csit_server.md
-MALGUARD_X_IMPLEMENTATION_PLAN.md
-*_Project_Report.docx
-*_Project_Report.pdf
-CenTaD-*
+# Transformed or generated malware artifacts
+/runs/
+/external_runs/
+/transformed/
+/quarantine/
+/clamav_db/
+*.cvd
+*.cld
+
+# Model artifacts and local experiment outputs
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.joblib
+*.pkl
+/checkpoints/
+/models/
+/weights/
+
+# Python/cache/env
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.*
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local logs
+/logs/
+*.log

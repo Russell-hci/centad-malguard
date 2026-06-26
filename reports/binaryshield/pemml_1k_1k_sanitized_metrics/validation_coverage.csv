@@ -1,0 +1,3 @@
+entry_point_unchanged_rate,executable_sections_unchanged_rate,expected_count,level_2_or_higher_rate,pe_parse_transformed_rate,transformation,validation_json_count,validation_json_generation_rate
+1.0,1.0,296,1.0,1.0,append_overlay,296,1.0
+1.0,0.9925373134328358,268,0.9925373134328358,1.0,section_slack,268,1.0
