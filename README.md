@@ -4,15 +4,15 @@ BinaryShield is a PE-aware robustness audit framework for static malware detecto
 
 BinaryShield does not ship malware samples, does not execute malware, and does not claim universal evasion resistance.
 
-## Problem
+## Why This Project Exists
 
-Clean malware detector accuracy can hide fragility. The project began with CenTaD-MalGuard image-space experiments, where a MobileNetV3 malware-image classifier achieved strong clean performance but collapsed under PGD attacks. BinaryShield is the final project direction because it moves the audit closer to raw Windows PE files and makes validation failures visible instead of hiding them.
+Clean malware detector accuracy can hide fragility. The original CenTaD-MalGuard image-space cycle showed this clearly: a MobileNetV3 malware-image classifier reached high clean performance but collapsed under PGD attacks. BinaryShield is the final project direction because it moves the audit closer to real Windows PE files and makes validation failures visible rather than hiding them.
 
-## Key Findings
+## Key Results
 
 | Evidence track | Result | Boundary |
 | --- | --- | --- |
-| MalGuard image-space baseline | MobileNetV3 clean accuracy `0.979211`, clean macro F1 `0.935261`; PGD-20 accuracy `0.002867`, PGD-20 macro F1 `0.000706` | Shows clean accuracy did not imply robustness |
+| MalGuard image-space baseline | MobileNetV3 clean accuracy `0.979211`, clean macro F1 `0.935261`; PGD-20 accuracy `0.002867`, PGD-20 macro F1 `0.000706` | Clean image accuracy did not imply robustness |
 | First PGD adversarial training | PGD-20 macro F1 improved to `0.031593` | Still weak family-balanced robustness |
 | FB-MalAT image-space continuation | Aggregate 80/80 target reached under FGSM, PGD-20, and PGD-50 | Worst-family F1 remained `0.000000`; image-space only |
 | Dike PE evidence | `byte_histogram_logistic` append robust-min macro F1 `0.977220`, slack robust-min macro F1 `0.980882`, stability `1.000000`, ASR `0.000000`, acceptance `PASS` | Initial accepted raw-PE evidence |
@@ -25,24 +25,91 @@ Clean malware detector accuracy can hide fragility. The project began with CenTa
 
 - Builds sanitized manifests for PE datasets.
 - Extracts PE structural features and 256-bin normalized byte histograms.
-- Trains transparent detector families including centroid baselines and class-balanced byte-histogram logistic regression.
+- Trains transparent detector families, including centroid baselines and class-balanced byte-histogram logistic regression.
 - Applies deterministic append-overlay and section-slack transformations.
 - Validates transformed files structurally with static PE checks.
 - Computes clean/transformed metrics, prediction stability, attack success rate, confidence intervals, paired tests, and detector comparisons.
 - Exports sanitized Markdown/CSV/JSON evidence without committing raw malware.
 
-## Public Repository Contents
+## Repository Layout
 
-- `binaryshield/`: PE parsing, transformation, validation, evaluation, detector, and dataset helper code.
-- `scripts/`: command-line tools for manifests, training/evaluation, evidence export, statistical analysis, ClamAV scan-only baselines, and RCA.
-- `tests/`: synthetic and fixture-based tests that do not require private malware datasets.
-- `docs/`: source-grounded audits, acceptance gates, detector explanations, and final narrative.
-- `reports/`: final paper, judge summary, verified metrics, robustness card, ClamAV blocker, slack RCA, and sanitized evidence tables.
-- `assets/figures/`: safe generated figures for the final report.
+```text
+binaryshield/        Core PE parsing, transformation, validation, model, dataset, and evaluation code
+scripts/             BinaryShield command-line tools
+tests/               Fixture and synthetic-data tests
+docs/                Source-grounded audits and claim boundaries
+reports/             Final paper, judge summary, robustness card, RCA, and sanitized metrics
+assets/figures/      Safe figures used by the final paper
+requirements.txt     Python dependencies
+```
 
-## Intentionally Excluded
+## Important Reports
 
-This public release excludes raw malware, benign PE datasets, transformed binaries, PEMML/Dike archives, ClamAV databases, model checkpoints, virtual environments, local run folders, logs, and private filesystem paths.
+- `reports/final_binaryshield_research_paper.md`
+- `reports/final_binaryshield_judge_summary.md`
+- `reports/final_binaryshield_verified_metrics_summary.md`
+- `reports/binaryshield_final_robustness_card.md`
+- `reports/binaryshield_pemml_statistical_analysis.md`
+- `reports/binaryshield_slack_failure_root_cause.md`
+- `reports/binaryshield_clamav_baseline.md`
+
+## Public Release Scope
+
+Included:
+
+- BinaryShield source code.
+- CLI scripts for manifests, training/evaluation, evidence export, statistical analysis, ClamAV scan-only baselines, and RCA.
+- Tests that use fixtures or synthetic data rather than private malware datasets.
+- Source-grounded audits and final reports.
+- Sanitized Dike and PEMML evidence summaries.
+- Safe generated figures.
+
+Excluded:
+
+- Raw malware and benign PE datasets.
+- Transformed binaries.
+- PEMML/Dike archives.
+- ClamAV databases.
+- Model checkpoints and local run folders.
+- Virtual environments, caches, logs, and private filesystem paths.
+
+## Safety And Ethics
+
+Use BinaryShield only for defensive evaluation and research. Do not execute malware on a normal workstation. Use isolated, purpose-built malware-analysis environments for any dynamic analysis. Keep raw datasets outside this repository. Do not upload malware samples to third-party scanners unless you understand their sharing policies.
+
+The ClamAV integration is scan-only and non-destructive. It must not be run with `--remove`, `--move`, `--copy`, quarantine options, or any workflow that modifies original samples.
+
+## Reproducibility
+
+Datasets used but not redistributed:
+
+- MalImg for the image-space phase.
+- DikeDataset for initial PE evidence.
+- PE Malware Machine Learning Dataset (PEMML) for external PE subset validation.
+
+The final PEMML result is a balanced 10,000-sample subset: 5,000 malware and 5,000 benign samples. It is not full PEMML validation.
+
+High-level reproduction flow:
+
+1. Obtain datasets from official or authorized sources.
+2. Store raw datasets outside the Git repository.
+3. Build a sanitized manifest with sample IDs, labels, splits, and hashes.
+4. Train/evaluate BinaryShield detectors on clean PE files.
+5. Run append-overlay and section-slack transformations.
+6. Validate transformed files structurally.
+7. Export sanitized metrics and robustness cards.
+8. Run paired statistical analysis over prediction CSVs.
+9. Commit only sanitized Markdown/CSV/JSON reports.
+
+Example PEMML subset commands:
+
+```bash
+python3 scripts/binaryshield_build_pemml_manifest.py   --samples-csv /path/to/pemml/samples.csv   --dataset-root /path/to/pemml   --output /path/to/manifests/pemml_5k_5k_manifest.csv   --summary-output reports/binaryshield/pemml_5k_5k_manifest_summary.json   --mode balanced-subset   --malware-count 5000   --benign-count 5000   --seed 1337
+
+python3 scripts/binaryshield_run_pipeline.py   --manifest /path/to/manifests/pemml_5k_5k_manifest.csv   --root-dir /path/to/pemml/samples   --output-dir /path/to/runs/pemml_5k_5k/results   --report-dir /path/to/runs/pemml_5k_5k/reports   --target label   --model-types centroid byte_histogram_centroid hybrid_centroid byte_histogram_logistic   --candidate-model-type byte_histogram_logistic   --skip-strongest-n
+
+python3 scripts/binaryshield_statistical_analysis.py   --run-dir /path/to/runs/pemml_5k_5k   --output-dir reports/binaryshield/pemml_5k_5k_sanitized_metrics   --report-output reports/binaryshield_pemml_statistical_analysis.md
+```
 
 ## Run Tests
 
@@ -52,21 +119,7 @@ python3 -m compileall binaryshield scripts tests
 python3 -m unittest discover -s tests -p 'test_binaryshield*.py'
 ```
 
-## Reproduce With Your Own PE Dataset
-
-Provide your own authorized dataset outside the repository, then build a manifest and run the pipeline. Example shape:
-
-```bash
-python3 scripts/binaryshield_build_pemml_manifest.py   --samples-csv /path/to/pemml/samples.csv   --dataset-root /path/to/pemml   --output /path/to/manifests/pemml_5k_5k_manifest.csv   --summary-output reports/binaryshield/pemml_5k_5k_manifest_summary.json   --mode balanced-subset   --malware-count 5000   --benign-count 5000   --seed 1337
-
-python3 scripts/binaryshield_run_pipeline.py   --manifest /path/to/manifests/pemml_5k_5k_manifest.csv   --root-dir /path/to/pemml/samples   --output-dir /path/to/runs/pemml_5k_5k/results   --report-dir /path/to/runs/pemml_5k_5k/reports   --target label   --model-types centroid byte_histogram_centroid hybrid_centroid byte_histogram_logistic   --candidate-model-type byte_histogram_logistic   --skip-strongest-n
-```
-
-Use external storage for datasets and runs. Commit only sanitized reports.
-
-## Safety And Ethics
-
-Use BinaryShield only for defensive evaluation and research. Do not execute malware outside an approved isolated environment. Do not upload malware samples to third-party scanners unless you understand the sharing policies. See `SECURITY_AND_ETHICS.md`.
+Some tests use optional analysis dependencies such as pandas and scikit-learn. In a minimal Python environment, those tests are skipped with an explicit message until `requirements.txt` is installed.
 
 ## Claim Boundaries
 
